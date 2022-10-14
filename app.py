@@ -57,8 +57,32 @@ plt.legend()
 plt.show()
 st.pyplot(plt)
 
+train_df = pd.DataFrame()
+train_df['ds'] = pd.to_datetime(df_prepare['Date'])
+train_df['y']=df_prepare['Temp9am']
+train_df.head(2)
+train_df2 = train_df[train_df['ds']<'2016-06-24']
+train_df2.tail(2)
+
 prophet_model = joblib.load('prophet.joblib')
 st.write(prophet_model)
+
+future = prophet_model.make_future_dataframe(periods=365)
+future.tail(2)
+
+forecast = prophet_model.predict(future)
+forecast.tail()
+
+plt.rcParams["figure.figsize"] = (20,15)
+fig, ax = plt.subplots()
+
+ax.plot(train_df['ds'],train_df['y'],label = "réalité")
+ax.plot(forecast['ds'], forecast['yhat'],label = "prédiction")
+plt.legend()
+plt.show()
+st.pyplot(plt)
+
+
 # top-level filters 
 
 # job_filter = st.selectbox("Select the Job", pd.unique(df['job']))
