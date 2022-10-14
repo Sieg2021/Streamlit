@@ -2,7 +2,7 @@ pandas
 plotly
 altair
 streamlit
-numpy
+numpy==1.21.5
 joblib
 sklearn
 matplotlib
