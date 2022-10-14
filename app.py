@@ -131,16 +131,16 @@ train_results
 import matplotlib.pyplot as plt
 plt.rcParams["figure.figsize"] = (20,15)
 
-plt.plot(train_results['Predictions'][20:300],color='yellow',label ='Predictions')
-plt.plot(train_results['Réalité'][20:300],label='Réalité')
+plt.plot(train_df['ds'],train_results['Predictions'][20:300],color='yellow',label ='Predictions')
+plt.plot(train_df['ds'],train_results['Réalité'][20:300],label='Réalité')
 plt.legend()
 st.pyplot(plt)
 
 val_predictions = model_lstm.predict(X_val1).flatten()
 val_results = pd.DataFrame(data={'Val Predictions':val_predictions, 'Réalité':y_val1})
 val_results
-plt.plot(val_results['Val Predictions'][:100],label='Predictions')
-plt.plot(val_results['Réalité'][:100],label='Réalité')
+plt.plot(train_df['ds'],val_results['Val Predictions'][:100],label='Predictions')
+plt.plot(train_df['ds'],val_results['Réalité'][:100],label='Réalité')
 plt.legend()
 st.pyplot(plt)
 
@@ -148,8 +148,8 @@ test_predictions = model_lstm.predict(X_test1).flatten()
 test_results = pd.DataFrame(data={'Test Predictions':test_predictions, 'Réalité':y_test1})
 test_results
 
-plt.plot(test_results['Test Predictions'][:155],label='Predictions')
-plt.plot(test_results['Réalité'][:155],label='Réalité')
+plt.plot(train_df['ds'],test_results['Test Predictions'][:155],label='Predictions')
+plt.plot(train_df['ds'],test_results['Réalité'][:155],label='Réalité')
 plt.legend()
 st.pyplot(plt)
 
