@@ -85,7 +85,7 @@ st.pyplot(plt)
 
 from keras.models import load_model
 model_lstm = load_model('model_lstm.h5')
-st.write(model_lstm)
+#st.write(model_lstm)
 
 df = chargement_data()
 df_prepare = chargement_ville('Darwin',df)
