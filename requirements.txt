@@ -1,11 +1,7 @@
 pandas
-pystan
-holidays
 plotly
 altair
 streamlit
 numpy
-time 
-plotly.express
 joblib
 sklearn
