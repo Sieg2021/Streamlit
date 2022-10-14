@@ -83,8 +83,8 @@ plt.show()
 st.pyplot(plt)
 
 
-
-model_lstm = joblib.load('model_lstm.joblib')
+from keras.models import load_model
+model_lstm = load_model('model_lstm.h5')
 st.write(model_lstm)
 
 df = chargement_data()
