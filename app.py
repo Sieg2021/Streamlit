@@ -82,6 +82,11 @@ plt.legend()
 plt.show()
 st.pyplot(plt)
 
+
+
+model_lstm = joblib.load('model_lstm.joblib')
+st.write(model_lstm)
+
 df = chargement_data()
 df_prepare = chargement_ville('Darwin',df)
 
