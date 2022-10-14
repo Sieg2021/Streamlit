@@ -82,6 +82,73 @@ plt.legend()
 plt.show()
 st.pyplot(plt)
 
+df = chargement_data()
+df_prepare = chargement_ville('Darwin',df)
+
+df_prepare.head()
+
+train_df = pd.DataFrame()
+train_df['ds'] = pd.to_datetime(df_prepare['Date'])
+train_df['y']=df_prepare['Temp9am']
+train_df.head(2)
+train_df2 = train_df[train_df['ds']<'2016-06-24']
+train_df2.tail(2)
+df_rnn= train_df
+df_rnn.index = pd.to_datetime(df_rnn['ds'])
+df_rnn.drop(['ds'],axis=1)
+def df_to_X_y(df, window_size=5):
+  df_as_np = df.to_numpy()
+  X = []
+  y = []
+  for i in range(len(df_as_np)-window_size):
+    row = [[a] for a in df_as_np[i:i+window_size]]
+    X.append(row)
+    label = df_as_np[i+window_size]
+    y.append(label)
+  return np.array(X), np.array(y)
+WINDOW_SIZE = 5
+temp = df_rnn['y']
+X1, y1 = df_to_X_y(temp, WINDOW_SIZE)
+X1.shape, y1.shape
+X_train1, y_train1 = X1[:2900], y1[:2900]
+X_val1, y_val1 = X1[2900:3033], y1[2900:3033]
+X_test1, y_test1 = X1[3033:], y1[3033:]
+X_train1.shape, y_train1.shape, X_val1.shape, y_val1.shape, X_test1.shape, y_test1.shape
+score = model_lstm.evaluate(X_test1, y_test1, verbose=0)
+
+print('x_test / loss      : {:5.4f}'.format(score[0]))
+print('x_test / mape       : {:5.4f}'.format(score[1]))
+print('x_test / mae       : {:5.4f}'.format(score[2]))
+
+train_predictions = model_lstm.predict(X_train1).flatten()
+train_results = pd.DataFrame(data={'Predictions':train_predictions, 'Réalité':y_train1})
+train_results
+import matplotlib.pyplot as plt
+plt.rcParams["figure.figsize"] = (20,15)
+
+plt.plot(train_results['Predictions'][20:300],color='yellow',label ='Predictions')
+plt.plot(train_results['Réalité'][20:300],label='Réalité')
+plt.legend()
+st.pyplot(plt)
+
+val_predictions = model_lstm.predict(X_val1).flatten()
+val_results = pd.DataFrame(data={'Val Predictions':val_predictions, 'Réalité':y_val1})
+val_results
+plt.plot(val_results['Val Predictions'][:100],label='Predictions')
+plt.plot(val_results['Réalité'][:100],label='Réalité')
+plt.legend()
+st.pyplot(plt)
+
+test_predictions = model_lstm.predict(X_test1).flatten()
+test_results = pd.DataFrame(data={'Test Predictions':test_predictions, 'Réalité':y_test1})
+test_results
+
+plt.plot(test_results['Test Predictions'][:155],label='Predictions')
+plt.plot(test_results['Réalité'][:155],label='Réalité')
+plt.legend()
+st.pyplot(plt)
+
+
 
 # top-level filters 
 
