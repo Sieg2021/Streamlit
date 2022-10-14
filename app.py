@@ -57,8 +57,8 @@ plt.legend()
 plt.show()
 st.pyplot(plt)
 
-# prophet_model = joblib.load('prophet.joblib')
-# st.write(prophet_model)
+prophet_model = joblib.load('prophet.joblib')
+st.write(prophet_model)
 # top-level filters 
 
 # job_filter = st.selectbox("Select the Job", pd.unique(df['job']))
