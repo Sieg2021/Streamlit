@@ -2,10 +2,10 @@ pandas
 plotly
 altair
 streamlit
-numpy==1.21.5
+numpy
 joblib
 sklearn
 matplotlib
 pystan==2.19.1.1
 seaborn
-fbprophet
+prophet
