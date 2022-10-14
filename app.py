@@ -56,6 +56,7 @@ plt_dummy.plot(test_results['Réalité'][20:300],label='Réalité')
 plt_dummy.legend()
 plt_dummy.show()
 st.pyplot(plt_dummy)
+plt_dummy.figure().clear()
 
 train_df = pd.DataFrame()
 train_df['ds'] = pd.to_datetime(df_prepare['Date'])
@@ -83,6 +84,7 @@ ax.plot(forecast['ds'], forecast['yhat'],label = "prédiction")
 plt_prophet.legend()
 plt_prophet.show()
 st.pyplot(plt_prophet)
+plt_prophet.figure().clear()
 
 
 from keras.models import load_model
@@ -137,6 +139,7 @@ plt_lstm_1.plot(train_df['ds'][20:300],train_results['Predictions'][20:300],colo
 plt_lstm_1.plot(train_df['ds'][20:300],train_results['Réalité'][20:300],label='Réalité')
 plt_lstm_1.legend()
 st.pyplot(plt_lstm_1)
+plt_lstm_1.figure().clear()
 
 val_predictions = model_lstm.predict(X_val1).flatten()
 val_results = pd.DataFrame(data={'Val Predictions':val_predictions, 'Réalité':y_val1})
@@ -148,6 +151,8 @@ plt_lstm_2.plot(train_df['ds'][2900:3000],val_results['Val Predictions'][:100],l
 plt_lstm_2.plot(train_df['ds'][2900:3000],val_results['Réalité'][:100],label='Réalité')
 plt_lstm_2.legend()
 st.pyplot(plt_lstm_2)
+plt_lstm_2.figure().clear()
+
 
 test_predictions = model_lstm.predict(X_test1).flatten()
 test_results = pd.DataFrame(data={'Test Predictions':test_predictions, 'Réalité':y_test1})
@@ -158,6 +163,7 @@ plt.plot(train_df['ds'][3033:3188],test_results['Test Predictions'][:155],label=
 plt.plot(train_df['ds'][3033:3188],test_results['Réalité'][:155],label='Réalité')
 plt.legend()
 st.pyplot(plt)
+plt.figure().clear()
 
 
 
