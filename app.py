@@ -49,13 +49,13 @@ test_result= test_results.reset_index(drop=True)
 st.write(test_result)
 
 import matplotlib.pyplot as plt
-plt.rcParams["figure.figsize"] = (20,15)
+plt_dummy.rcParams["figure.figsize"] = (20,15)
 
-plt.plot(test_results['Test Predictions'][20:300],color='red',label ='Predictions')
-plt.plot(test_results['Réalité'][20:300],label='Réalité')
-plt.legend()
-plt.show()
-st.pyplot(plt)
+plt_dummy.plot(test_results['Test Predictions'][20:300],color='red',label ='Predictions')
+plt_dummy.plot(test_results['Réalité'][20:300],label='Réalité')
+plt_dummy.legend()
+plt_dummy.show()
+st.pyplot(plt_dummy)
 
 train_df = pd.DataFrame()
 train_df['ds'] = pd.to_datetime(df_prepare['Date'])
@@ -73,14 +73,14 @@ future.tail(2)
 forecast = prophet_model.predict(future)
 forecast.tail()
 
-plt.rcParams["figure.figsize"] = (20,15)
-fig, ax = plt.subplots()
+plt_prophet.rcParams["figure.figsize"] = (20,15)
+fig, ax = plt_prophet.subplots()
 
 ax.plot(train_df['ds'],train_df['y'],label = "réalité")
 ax.plot(forecast['ds'], forecast['yhat'],label = "prédiction")
-plt.legend()
-plt.show()
-st.pyplot(plt)
+plt_prophet.legend()
+plt_prophet.show()
+st.pyplot(plt_prophet)
 
 
 from keras.models import load_model
@@ -129,20 +129,20 @@ train_predictions = model_lstm.predict(X_train1).flatten()
 train_results = pd.DataFrame(data={'Predictions':train_predictions, 'Réalité':y_train1})
 train_results
 import matplotlib.pyplot as plt
-plt.rcParams["figure.figsize"] = (20,15)
+plt_lstm_1.rcParams["figure.figsize"] = (20,15)
 
-plt.plot(train_df['ds'][20:300],train_results['Predictions'][20:300],color='yellow',label ='Predictions')
-plt.plot(train_df['ds'][20:300],train_results['Réalité'][20:300],label='Réalité')
-plt.legend()
-st.pyplot(plt)
+plt_lstm_1.plot(train_df['ds'][20:300],train_results['Predictions'][20:300],color='yellow',label ='Predictions')
+plt_lstm_1.plot(train_df['ds'][20:300],train_results['Réalité'][20:300],label='Réalité')
+plt_lstm_1.legend()
+st.pyplot(plt_lstm_1)
 
 val_predictions = model_lstm.predict(X_val1).flatten()
 val_results = pd.DataFrame(data={'Val Predictions':val_predictions, 'Réalité':y_val1})
 val_results
-plt.plot(train_df['ds'][2900:3000],val_results['Val Predictions'][:100],label='Predictions')
-plt.plot(train_df['ds'][2900:3000],val_results['Réalité'][:100],label='Réalité')
-plt.legend()
-st.pyplot(plt)
+plt_lstm_2.plot(train_df['ds'][2900:3000],val_results['Val Predictions'][:100],label='Predictions')
+plt_lstm_2.plot(train_df['ds'][2900:3000],val_results['Réalité'][:100],label='Réalité')
+plt_lstm_2.legend()
+st.pyplot(plt_lstm_2)
 
 test_predictions = model_lstm.predict(X_test1).flatten()
 test_results = pd.DataFrame(data={'Test Predictions':test_predictions, 'Réalité':y_test1})
