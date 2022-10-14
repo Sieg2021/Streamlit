@@ -48,7 +48,7 @@ test_results = pd.DataFrame(data={'Test Predictions':y_predict, 'Réalité':y_te
 test_result= test_results.reset_index(drop=True)
 st.write(test_result)
 
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt_dummy
 plt_dummy.rcParams["figure.figsize"] = (20,15)
 
 plt_dummy.plot(test_results['Test Predictions'][20:300],color='red',label ='Predictions')
@@ -66,6 +66,8 @@ train_df2.tail(2)
 
 prophet_model = joblib.load('prophet.joblib')
 st.write(prophet_model)
+
+import matplotlib.pyplot as plt_prophet
 
 future = prophet_model.make_future_dataframe(periods=365)
 future.tail(2)
@@ -128,7 +130,7 @@ print('x_test / mae       : {:5.4f}'.format(score[2]))
 train_predictions = model_lstm.predict(X_train1).flatten()
 train_results = pd.DataFrame(data={'Predictions':train_predictions, 'Réalité':y_train1})
 train_results
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt_lstm_1
 plt_lstm_1.rcParams["figure.figsize"] = (20,15)
 
 plt_lstm_1.plot(train_df['ds'][20:300],train_results['Predictions'][20:300],color='yellow',label ='Predictions')
@@ -139,6 +141,9 @@ st.pyplot(plt_lstm_1)
 val_predictions = model_lstm.predict(X_val1).flatten()
 val_results = pd.DataFrame(data={'Val Predictions':val_predictions, 'Réalité':y_val1})
 val_results
+
+import matplotlib.pyplot as plt_lstm_2
+
 plt_lstm_2.plot(train_df['ds'][2900:3000],val_results['Val Predictions'][:100],label='Predictions')
 plt_lstm_2.plot(train_df['ds'][2900:3000],val_results['Réalité'][:100],label='Réalité')
 plt_lstm_2.legend()
@@ -148,6 +153,7 @@ test_predictions = model_lstm.predict(X_test1).flatten()
 test_results = pd.DataFrame(data={'Test Predictions':test_predictions, 'Réalité':y_test1})
 test_results
 
+import matplotlib.pyplot as plt
 plt.plot(train_df['ds'][3033:3188],test_results['Test Predictions'][:155],label='Predictions')
 plt.plot(train_df['ds'][3033:3188],test_results['Réalité'][:155],label='Réalité')
 plt.legend()
