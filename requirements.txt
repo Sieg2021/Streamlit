@@ -6,6 +6,6 @@ numpy
 joblib
 sklearn
 matplotlib
-pystan
+pystan==2.19.1.1
 seaborn
 fbprophet
