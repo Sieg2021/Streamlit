@@ -1,7 +1,6 @@
 pandas
 pystan
 holidays
-fbprophet
 plotly
 altair
 streamlit
