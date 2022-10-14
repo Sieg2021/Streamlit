@@ -6,5 +6,4 @@ numpy
 joblib
 sklearn
 matplotlib
-pystan==2.19.1.1
 seaborn
