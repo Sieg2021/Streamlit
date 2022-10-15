@@ -166,6 +166,55 @@ plt.legend()
 st.pyplot(plt)
 plt.figure().clear()
 
+%matplotlib qt5
+plt.ion()
+
+fig = plt.figure(figsize=(20,12))
+
+# define axis1, labels, and legend
+ah1 = fig.add_subplot(211)
+ah1.set_ylabel("Température (en °C)", fontsize=14)
+l1, = ah1.plot(train_df['ds'][3033:3188], test_results['Test Predictions'][:155], color='rosybrown', label=ch1)
+ah1.legend(loc="upper right", fontsize=12, fancybox=True, framealpha=0.5)
+
+# define axis2, labels, and legend
+ah2 = fig.add_subplot(212)
+ah2.set_xlabel("Temps (en jour)", fontsize=14, labelpad=10)
+ah2.set_ylabel("Température (en °C)", fontsize=14)
+l2, = ah2.plot(train_df['ds'][3033:3188], test_results['Réalité'][:155], color='silver', label=ch2)
+ah2.legend(loc="upper right", fontsize=12, fancybox=True, framealpha=0.5)
+
+start = 0
+
+# simulate entire data
+while start+visible <= eeg.shape[0]: 
+   
+    # extend deques (both x and y axes)
+    dy1.extend(eeg[ch1].iloc[start:start+visible])
+    dy2.extend(eeg[ch2].iloc[start:start+visible])
+    dx.extend(interval[start:start+visible])
+
+    # update plot 
+    l1.set_ydata(dy1)  
+    l2.set_ydata(dy2)
+    l1.set_xdata(dx)
+    l2.set_xdata(dx)
+
+    # get mean of deques
+    mdy1 = np.mean(dy1)
+    mdy2 = np.mean(dy2)
+
+    # set x- and y-limits based on their mean
+    ah1.set_ylim(-120+mdy1, 200+mdy1)
+    ah1.set_xlim(interval[start], interval[start+visible])
+    ah2.set_ylim(-60+mdy2, 100+mdy2)
+    ah2.set_xlim(interval[start], interval[start+visible])
+
+    # control speed of moving time-series
+    start += 25
+
+    fig.canvas.draw()
+    fig.canvas.flush_events()
 
 
 # top-level filters 
