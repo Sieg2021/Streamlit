@@ -10,3 +10,4 @@ seaborn
 pystan
 prophet
 tensorflow
+collections
