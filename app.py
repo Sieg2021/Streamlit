@@ -6,6 +6,7 @@ import plotly.express as px # interactive charts
 import joblib
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
+from collections import deque
 from fonction_utile import *
 
 # read csv from a github repo
