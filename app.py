@@ -5,7 +5,6 @@ import time # to simulate a real time data, time loop
 import plotly.express as px # interactive charts 
 import plotly.graph_objects as go
 import joblib
-from imblearn.over_sampling import RandomOverSampler, SMOTE
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import confusion_matrix, roc_auc_score, roc_curve, classification_report, precision_recall_curve
@@ -18,7 +17,7 @@ from streamlit_option_menu import option_menu
 import extra_streamlit_components as stx
 import streamlit.components.v1 as html
 from  PIL import Image
-import cv2
+
 from st_aggrid import AgGrid
 import io 
 
@@ -34,12 +33,12 @@ st.set_page_config(
 
 # dashboard title
 
-st.title("Prévision météo")
+#st.title("Prévision météo")
 
 with st.sidebar:
-    choose = option_menu("App Gallery", ["À propos du projet", "Classifier", "Regressor"],
-                         icons=['house', 'camera fill', 'kanban'],
-                         menu_icon="app-indicator", default_index=0,
+    choose = option_menu("Menu", ["À propos du projet", "Data Viz","Classification", "Regression","Application"],
+                         icons=['cloud-hail','bar-chart', 'diagram-2', 'graph-up','app-indicator'],
+                         menu_icon="menu-up", default_index=0,
                          styles={
         "container": {"padding": "5!important", "background-color": "#262730"},
         "icon": {"color": "orange", "font-size": "25px"}, 
@@ -54,15 +53,89 @@ if choose == "À propos du projet":
         st.markdown(""" <style> .font {
         font-size:35px ; font-family: 'Cooper Black'; color: #FF9633;} 
         </style> """, unsafe_allow_html=True)
-        st.markdown('<p class="font">About the Creator</p>', unsafe_allow_html=True)    
-    st.write("Sharone Li is a data science practitioner, enthusiast, and blogger. She writes data science articles and tutorials about Python, data visualization, Streamlit, etc. She is also an amateur violinist who loves classical music.\n\nTo read Sharone's data science posts, please visit her Medium blog at: https://medium.com/@insightsbees")    
-    # st.image(profile, width=700 )
+        st.markdown('<p class="font">Présentation du projet</p>', unsafe_allow_html=True)    
+        
+        st.image('meteo.png', width=600)
+        st.write('Ce projet est basé sur un ensemble d’observations météorologiques journalières d’Australie. Ces observations ont été faites sur l’ensemble du territoire Australien, dans 49 villes différentes.')
+        st.title('Objectifs')
+        st.write('L’objectif de ce projet est de proposer des modèles capables de prédire efficacement les données météorologiques notamment la température')
+        st.write('La température est exprimée en degré celsius. Dans notre jeu de données , les valeurs varient entre -7.2 et 40 °C.')
+        
+        st.title('Membres du projet')
+        st.write('Saïd LATTI')
+        st.write('Emma ROBERT')
+if choose == "Data Viz":
+    st.empty()
+    col1, col2, col3 = st.columns( [0.2, 0.5,0.3])
+    with col2:               # To display the header text using css style
+        st.markdown(""" <style> .font {
+        font-size:35px ; font-family: 'Cooper Black'; color: #FF9633;} 
+        </style> """, unsafe_allow_html=True)
+        st.markdown('<p class="font">Visualisation des données</p>', unsafe_allow_html=True)    
+        path="weatherAUS.csv"
+        df = pd.read_csv(path)
+        
+        #with st.spinner(text='In progress'):
+        #    time.sleep(25)
+        
+        st.write("Afin de mieux comprendre les données et leurs impacts voici quelques visualisations :")
+        fig, ax = plt.subplots(figsize=(1,1))
 
-if choose == "Regressor":
+        #graph nb de villes
+        st.bar_chart(df['Location'].value_counts())
+        
+        
+        #graph visualisation évoluation de la temp min max sur 10 ans
+        df2= df
+        df2['year'] = df2['Date'].apply(lambda date : date.split('-')[0]).astype(int)
+        df2['month'] = df2['Date'].apply(lambda date : date.split('-')[1]).astype(int)
+        df2['day'] = df2['Date'].apply(lambda date : date.split('-')[2]).astype(int)
+        st.write("Visualisation de l'évolution de la température maximale et minimale")
+        fig = plt.figure()
+        sns.lineplot( x= 'year', y = 'MinTemp', label = 'température min', data = df2.groupby('year').mean())
+        sns.lineplot( x= 'year', y = 'MaxTemp', label = 'température max', data = df2.groupby('year').mean())
+        plt.title("Variation de températures à l'année")
+        plt.xlabel('Année')
+        plt.ylabel('Température (°C) ')
+        st.pyplot(fig)
+        df = pd.read_csv(path)
+
+        #répartion Rain
+        fig3 =plt.figure(figsize=(20, 8))
+        plt.subplot(121)
+        plt.title(label='Modalités de la variable RainToday')
+        sns.countplot(x="RainToday", data=df)
+        plt.subplot(122)
+        plt.title(label='Modalités de la variable RainTomorrow')
+        sns.countplot(x="RainTomorrow", data=df);
+        st.pyplot(fig3)
+        
+        #visualisation multivariable
+        st.write("Visualisation de la réparation de chacune des variables dans le jeu de données")
+        numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
+        num_variable = df.select_dtypes(include=numerics)
+        fig = plt.figure()
+        plt.subplots_adjust(left=0.12,
+                            bottom=0.12,
+                            right=0.9,
+                            top=0.9,
+                            wspace=0.4,
+                            hspace=0.4)
+        for i, column in enumerate(num_variable, 1):
+            plt.subplot(4,4,i)
+            sns.histplot(df[column]).set(title=column);
+        st.pyplot(fig)
+
+if choose == "Regression":
+    st.markdown(""" <style> .font {
+        font-size:35px ; font-family: 'Cooper Black'; color: #FF9633;} 
+        </style> """, unsafe_allow_html=True)
+    st.markdown('<p class="font">Regression</p>', unsafe_allow_html=True)  
     chosen_id = stx.tab_bar(data=[
-    stx.TabBarItemData(id="tab1", title="DummyRegressor", description="Tasks to take care of"),
-    stx.TabBarItemData(id="tab2", title="Prophet", description="Tasks taken care of"),
-    stx.TabBarItemData(id="tab3", title="LSTM Model", description="Tasks missed out")])
+    stx.TabBarItemData(id="tab1", title="DummyRegressor", description="Base Line"),
+    stx.TabBarItemData(id="tab2", title="Arima", description="Algorithme de moyenne mobile intégrée autorégressive "),
+    stx.TabBarItemData(id="tab3", title="Prophet", description="Série temporelle par Facebook"),
+    stx.TabBarItemData(id="tab4", title="LSTM Model", description="Reseau de neurones récurrent")])
     placeholder = st.container()
     if chosen_id == "tab1":
         st.write("<h3>DummyRegressor</h3>", unsafe_allow_html=True)
@@ -98,7 +171,7 @@ if choose == "Regressor":
         st.pyplot(plt_dummy)
         plt_dummy.figure().clear()
 
-    elif chosen_id == "tab2":
+    elif chosen_id == "tab3":
         st.write("<h3>Prophet</h3>", unsafe_allow_html=True)
         df = chargement_data()
         df_prepare = chargement_ville('Darwin',df)
@@ -142,7 +215,36 @@ if choose == "Regressor":
         st.pyplot(plt_prophet)
         plt_prophet.figure().clear()
 
-    elif chosen_id == "tab3":
+    elif chosen_id == "tab2":
+
+        df = chargement_data()
+        df_prepare = chargement_ville('Darwin',df)
+        df_ts = df_prepare[['Date','Temp9am']].copy()
+        df_ts['Date'] = pd.to_datetime(df_ts['Date'])
+        df_ts.reset_index(drop=True, inplace=True)
+        df_ts.set_index('Date', inplace=True)
+        y_train = df_ts[df_ts.index<'2016-06-24'] #train_df[train_df['ds']<'2016-06-24']
+        y_test = df_ts[df_ts.index>='2016-06-24']
+        
+        arima = joblib.load('arima.joblib')
+        #st.write(arima)
+        from pylab import rcParams
+        rcParams['figure.figsize'] = 18, 8
+        pred = arima.get_prediction(start=pd.to_datetime('2016-06-24'), dynamic=False)
+        pred_ci = pred.conf_int()
+        train_results = pd.DataFrame(data={'Predictions':pred.predicted_mean})
+        train_results = train_results.merge(y_test, left_index=True, right_index=True)
+        ax = plt.plot(y_test,label='Observation')
+        plt.plot(pred.predicted_mean, label='Prediction', alpha=.7)
+        plt.fill_between(pred_ci.index,
+                        pred_ci.iloc[:, 0],
+                        pred_ci.iloc[:, 1], color='k', alpha=.2)
+        plt.xlabel('Date')
+        plt.ylabel('Temperature')
+        plt.legend()
+        st.pyplot(plt)
+        plt.figure().clear()
+    elif chosen_id == "tab4":
         st.write("<h3>LSTM Model</h3>", unsafe_allow_html=True)
 
         from keras.models import load_model
@@ -267,8 +369,11 @@ if choose == "Regressor":
 
         
 
-if choose == "Classifier":
-    st.write("Classifier")
+if choose == "Classification":
+    st.markdown(""" <style> .font {
+        font-size:35px ; font-family: 'Cooper Black'; color: #FF9633;} 
+        </style> """, unsafe_allow_html=True)
+    st.markdown('<p class="font">Classification</p>', unsafe_allow_html=True)  
     df = chargement_data()
     df_prepare = chargement_ville('Darwin',df)
     cat_columns, num_columns = separation_colonnes(df_prepare)
@@ -337,31 +442,27 @@ if choose == "Classifier":
         sc = MinMaxScaler()
         X_train[num_columns] = sc.fit_transform(X_train[num_columns])
         X_test[num_columns] = sc.transform(X_test[num_columns])
-        #équilibrage par Oversampling : SMOTE
-        smo = SMOTE()
-        X_sm, y_sm = smo.fit_resample(X_train, y_train)
-        print('Classes échantillon SMOTE :', dict(pd.Series(y_sm).value_counts()))
-
-        dtree = joblib.load('dtree.joblib')
+       
+        dtree = joblib.load('dtree_clf.joblib')
 
         y_dtree = dtree.predict(X_test)
         y_dtree_prob=dtree.predict_proba(X_test)[:,1]
 
         st.write("LogisticRegression")
 
-        lr = joblib.load('lr.joblib')
+        lr = joblib.load('lr_clf.joblib')
         y_lr = lr.predict(X_test)
         y_lr_prob=lr.predict_proba(X_test)[:,1]
 
         st.write("RandomForestClassifier")
 
-        rf = joblib.load('rf.joblib')
+        rf = joblib.load('rf_clf.joblib')
         y_rf = rf.predict(X_test)
         y_rf_prob=rf.predict_proba(X_test)[:,1]
 
         st.write("SVC")
 
-        svm = joblib.load('svm.joblib')
+        svm = joblib.load('svm_clf.joblib')
         y_svm = svm.predict(X_test) 
         y_svm_prob=svm.predict_proba(X_test)[:,1]
 
@@ -499,26 +600,23 @@ if choose == "Classifier":
         X_train[num_columns] = sc.fit_transform(X_train[num_columns])
         X_test[num_columns] = sc.transform(X_test[num_columns])
 
-        smo = SMOTE()
-        X_sm, y_sm = smo.fit_resample(X_train, y_train)
-        print('Classes échantillon SMOTE :', dict(pd.Series(y_sm).value_counts()))
-
-        dtree_ville = joblib.load('dtree_ville.joblib')
+       
+        dtree_ville = joblib.load('dtree_ville_clf.joblib')
 
         y_dtree_ville = dtree_ville.predict(X_test)
         y_dtree_ville_prob=dtree_ville.predict_proba(X_test)[:,1]
 
-        lr_ville = joblib.load('lr_ville.joblib')
+        lr_ville = joblib.load('lr_ville_clf.joblib')
 
         y_lr_ville = lr_ville.predict(X_test)
         y_lr_ville_prob=lr_ville.predict_proba(X_test)[:,1]
 
-        rf_ville = joblib.load('rf_ville.joblib')
+        rf_ville = joblib.load('rf_ville_clf.joblib')
 
         y_rf_ville = rf_ville.predict(X_test)
         y_rf_ville_prob=rf_ville.predict_proba(X_test)[:,1]
 
-        svm_ville = joblib.load('svm_ville.joblib')
+        svm_ville = joblib.load('svm_ville_clf.joblib')
 
         y_svm_ville = svm_ville.predict(X_test) 
         y_svm_ville_prob=svm_ville.predict_proba(X_test)[:,1]
@@ -639,66 +737,3 @@ if choose == "Classifier":
     
     else:
         placeholder = st.empty()
-    
-
-
-
-
-
-
-
-
-
-# top-level filters 
-
-# job_filter = st.selectbox("Select the Job", pd.unique(df['job']))
-
-
-# # creating a single-element container.
-# placeholder = st.empty()
-
-# # dataframe filter 
-
-# df = df[df['job']==job_filter]
-
-# # near real-time / live feed simulation 
-
-# for seconds in range(200):
-# #while True: 
-    
-#     df['age_new'] = df['age'] * np.random.choice(range(1,5))
-#     df['balance_new'] = df['balance'] * np.random.choice(range(1,5))
-
-#     # creating KPIs 
-#     avg_age = np.mean(df['age_new']) 
-
-#     count_married = int(df[(df["marital"]=='married')]['marital'].count() + np.random.choice(range(1,30)))
-    
-#     balance = np.mean(df['balance_new'])
-
-#     with placeholder.container():
-#         # create three columns
-#         kpi1, kpi2, kpi3 = st.columns(3)
-
-#         # fill in those three columns with respective metrics or KPIs 
-#         kpi1.metric(label="Age ⏳", value=round(avg_age), delta= round(avg_age) - 10)
-#         kpi2.metric(label="Married Count 💍", value= int(count_married), delta= - 10 + count_married)
-#         kpi3.metric(label="A/C Balance ＄", value= f"$ {round(balance,2)} ", delta= - round(balance/count_married) * 100)
-
-#         # create two columns for charts 
-
-#         fig_col1, fig_col2 = st.columns(2)
-#         with fig_col1:
-#             st.markdown("### First Chart")
-#             fig = px.density_heatmap(data_frame=df, y = 'age_new', x = 'marital')
-#             st.write(fig)
-#         with fig_col2:
-#             st.markdown("### Second Chart")
-#             fig2 = px.histogram(data_frame = df, x = 'age_new')
-#             st.write(fig2)
-#         st.markdown("### Detailed Data View")
-#         st.dataframe(df)
-#         time.sleep(1)
-#     #placeholder.empty()
-
-
