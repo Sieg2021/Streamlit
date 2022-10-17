@@ -36,8 +36,8 @@ st.set_page_config(
 #st.title("Prévision météo")
 
 with st.sidebar:
-    choose = option_menu("Menu", ["À propos du projet", "Data Viz","Classification", "Regression","Application"],
-                         icons=['cloud-hail','bar-chart', 'diagram-2', 'graph-up','app-indicator'],
+    choose = option_menu("Menu", ["À propos du projet", "Jeux de données","Data Viz","Classification", "Regression","Application"],
+                         icons=['cloud-hail','pie-chart','bar-chart', 'diagram-2', 'graph-up','app-indicator'],
                          menu_icon="menu-up", default_index=0,
                          styles={
         "container": {"padding": "5!important", "background-color": "#262730"},
@@ -58,12 +58,32 @@ if choose == "À propos du projet":
         st.image('meteo.png', width=600)
         st.write('Ce projet est basé sur un ensemble d’observations météorologiques journalières d’Australie. Ces observations ont été faites sur l’ensemble du territoire Australien, dans 49 villes différentes.')
         st.title('Objectifs')
-        st.write('L’objectif de ce projet est de proposer des modèles capables de prédire efficacement les données météorologiques notamment la température')
+        st.write('L’objectif de ce projet est de proposer des modèles capables de prédire efficacement les données météorologiques, à savoir s\'il pleuvra le lendemain ou quelle température il fera.')
         st.write('La température est exprimée en degré celsius. Dans notre jeu de données , les valeurs varient entre -7.2 et 40 °C.')
         
         st.title('Membres du projet')
         st.write('Saïd LATTI')
         st.write('Emma ROBERT')
+if choose == "Jeux de données":
+    col1, col2 = st.columns( [0.8, 0.2])
+    with col1: 
+        st.markdown(""" <style> .font {
+        font-size:35px ; font-family: 'Cooper Black'; color: #FF9633;} 
+        </style> """, unsafe_allow_html=True)
+        st.markdown('<p class="font">Jeux de Donnée</p>', unsafe_allow_html=True) 
+        chosen_id = stx.tab_bar(data=[
+        stx.TabBarItemData(id="tab1", title="Présentation", description="Présentation et description des données"),
+        stx.TabBarItemData(id="tab2", title="Préprocessing", description="Etapes de préparation des données ")])
+        placeholder = st.container()
+
+        if chosen_id == "tab1":
+            st.empty()
+            from data import page_data              # To display the header text using css style
+            page_data()
+        if chosen_id == "tab2":
+            st.empty()
+            from preprocessing import page_preprocessing    # To display the header text using css style
+            page_preprocessing()
 if choose == "Data Viz":
     st.empty()
     col1, col2, col3 = st.columns( [0.2, 0.5,0.3])
@@ -78,7 +98,7 @@ if choose == "Data Viz":
         #with st.spinner(text='In progress'):
         #    time.sleep(25)
         
-        st.write("Afin de mieux comprendre les données et leurs impacts voici quelques visualisations :")
+        st.write("Afin de mieux comprendre les données et leurs impacts, voici quelques visualisations :")
         fig, ax = plt.subplots(figsize=(1,1))
 
         #graph nb de villes
@@ -325,44 +345,6 @@ if choose == "Regression":
         st.pyplot(plt)
         plt.figure().clear()
 
-        import time
-        import plotly.graph_objects as go
-        import pandas as pd
-        import numpy as np
-
-        df = test_results
-        df['ds'] = train_df['ds'][3033:3188]
-        for i in range(df.shape[0]):
-            df['ds'][i] =train_df['ds'][3033+i]
-        header = st.container()
-        select_param = st.container()
-        plot_spot = st.empty()
-        st.write(df.shape)
-        st.write(df.tail(2))
-        #select parmeter drop down
-        with select_param:
-            param_lst = list(df.columns)
-            param_lst.remove('ds')
-            select_param = st.selectbox('Select a Weather Parameter',   param_lst)
-        #function to make chart
-        def make_chart(df, y_col1,y_col2, ymin, ymax):
-            fig = go.Figure(layout_yaxis_range=[ymin, ymax])
-            fig.add_trace(go.Scatter(x=df['ds'], y=df[y_col1],  name=y_col1))
-            fig.add_trace(go.Scatter(x=df['ds'], y=df[y_col2],  name=y_col2))
-            
-            fig.update_layout(width=900, height=570, xaxis_title='time',
-            yaxis_title='Température')
-            st.write(fig)
-
-        #func call
-        n = len(df)
-        ymax = max(df[select_param])+5
-        ymin = min(df[select_param])-5
-        for i in range(0, n-30, 1):
-            df_tmp = df.iloc[i:i+30, :]
-            with plot_spot:
-                make_chart(df_tmp, 'Test Predictions','Réalité', ymin, ymax)
-            time.sleep(0.5)
 
     else:
         placeholder = st.empty()
