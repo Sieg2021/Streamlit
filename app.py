@@ -55,7 +55,7 @@ if choose == "À propos du projet":
         </style> """, unsafe_allow_html=True)
         st.markdown('<p class="font">Présentation du projet</p>', unsafe_allow_html=True)    
         
-        # st.image('meteo.png', width=600)
+        st.image('meteo.png', width=600)
         st.write('Ce projet est basé sur un ensemble d’observations météorologiques journalières d’Australie. Ces observations ont été faites sur l’ensemble du territoire Australien, dans 49 villes différentes.')
         st.title('Objectifs')
         st.write('L’objectif de ce projet est de proposer des modèles capables de prédire efficacement les données météorologiques, à savoir s\'il pleuvra le lendemain ou quelle température il fera.')
@@ -64,6 +64,8 @@ if choose == "À propos du projet":
         st.title('Membres du projet')
         st.write('Saïd LATTI')
         st.write('Emma ROBERT')
+
+
 if choose == "Jeux de données":
     col1, col2 = st.columns( [0.8, 0.2])
     with col1: 
@@ -84,6 +86,9 @@ if choose == "Jeux de données":
             st.empty()
             from preprocessing import page_preprocessing    # To display the header text using css style
             page_preprocessing()
+
+
+
 if choose == "Data Viz":
     st.empty()
     col1, col2, col3 = st.columns( [0.2, 0.5,0.3])
@@ -145,6 +150,7 @@ if choose == "Data Viz":
             plt.subplot(4,4,i)
             sns.histplot(df[column]).set(title=column);
         st.pyplot(fig)
+
 if choose == "Regression":
     st.markdown(""" <style> .font {
         font-size:35px ; font-family: 'Cooper Black'; color: #FF9633;} 
@@ -158,6 +164,7 @@ if choose == "Regression":
     placeholder = st.container()
     if chosen_id == "tab1":
         st.write("<h3>DummyRegressor</h3>", unsafe_allow_html=True)
+        st.write("DummyRegressor est un modèle de régression qui fait des prédictions en utilisant des règles simples.")
         dummy_regressor_model = joblib.load('mon_dummy_regr.joblib')
         df = chargement_data()
         df_prepare = chargement_ville('Darwin',df)
@@ -178,7 +185,7 @@ if choose == "Regression":
 
         test_results = pd.DataFrame(data={'Test Predictions':y_predict, 'Réalité':y_test})
         test_result= test_results.reset_index(drop=True)
-        st.write(test_result)
+        #st.write(test_result)
 
         import matplotlib.pyplot as plt_dummy
         plt_dummy.rcParams["figure.figsize"] = (20,15)
@@ -190,8 +197,12 @@ if choose == "Regression":
         st.pyplot(plt_dummy)
         plt_dummy.figure().clear()
 
+        st.write("Curieusement, les résultats sont assez correct avec un pourcentage d’erreur absolu moyen de 8,1% comme le montre le graphique")
+
     elif chosen_id == "tab3":
         st.write("<h3>Prophet</h3>", unsafe_allow_html=True)
+        st.write("Pour cette approche, nous avons choisi de nous intéresser au modèle dévelloppé par Facebook : Facebook prophet car il est adapté aux séries temporelles et facile à paramétrer.")
+        st.write("Voici la courbe représentant la réalité et les données prédites par ce modèle :")
         df = chargement_data()
         df_prepare = chargement_ville('Darwin',df)
         df_prepare['Date'] = pd.to_datetime(df_prepare['Date'])
@@ -234,7 +245,11 @@ if choose == "Regression":
         st.pyplot(plt_prophet)
         plt_prophet.figure().clear()
 
+        st.write("On obtient de très bons résultats et qui sont assez proches de la réalité")
+
     elif chosen_id == "tab2":
+        st.write("Etant donné que nos données contiennent une forte temporalité, dans cette approche nous allons utliser un modèle ARIMA.")
+        st.write("Voici la courbe représentant la réalité et les données prédites par ce modèle :")
 
         df = chargement_data()
         df_prepare = chargement_ville('Darwin',df)
@@ -263,12 +278,17 @@ if choose == "Regression":
         plt.legend()
         st.pyplot(plt)
         plt.figure().clear()
+
+        st.write("On obtient de très bons résultats et qui sont assez proches de la réalité, malgré un léger décalage de quelques degrés")
+
     elif chosen_id == "tab4":
         st.write("<h3>LSTM Model</h3>", unsafe_allow_html=True)
 
         from keras.models import load_model
         model_lstm = load_model('model_lstm.h5')
-        #st.write(model_lstm)
+
+        st.write("Dans cette approche, le modèle choisi est un réseau de neuronnes adapté aux séries temporelles : le modèle LSTM")
+        st.write("Les résultats obtenus sont bons avec le pourcentage d’erreur absolue moyenne  (MAPE) de 4.6%. Un graphe de comparaison entre les valeurs réelles et les valeurs prédites permettent de se rendre compte visuellement de ces performances:")
 
         df = chargement_data()
         df_prepare = chargement_ville('Darwin',df)
@@ -297,11 +317,11 @@ if choose == "Regression":
         WINDOW_SIZE = 5
         temp = df_rnn['y']
         X1, y1 = df_to_X_y(temp, WINDOW_SIZE)
-        X1.shape, y1.shape
+        #X1.shape, y1.shape
         X_train1, y_train1 = X1[:2900], y1[:2900]
         X_val1, y_val1 = X1[2900:3033], y1[2900:3033]
         X_test1, y_test1 = X1[3033:], y1[3033:]
-        X_train1.shape, y_train1.shape, X_val1.shape, y_val1.shape, X_test1.shape, y_test1.shape
+        #X_train1.shape, y_train1.shape, X_val1.shape, y_val1.shape, X_test1.shape, y_test1.shape
         score = model_lstm.evaluate(X_test1, y_test1, verbose=0)
 
         print('x_test / loss      : {:5.4f}'.format(score[0]))
@@ -310,26 +330,26 @@ if choose == "Regression":
 
         train_predictions = model_lstm.predict(X_train1).flatten()
         train_results = pd.DataFrame(data={'Predictions':train_predictions, 'Réalité':y_train1})
-        train_results
+        #train_results
         import matplotlib.pyplot as plt_lstm_1
         plt_lstm_1.rcParams["figure.figsize"] = (20,15)
 
         plt_lstm_1.plot(train_df['ds'][20:300],train_results['Predictions'][20:300],color='yellow',label ='Predictions')
         plt_lstm_1.plot(train_df['ds'][20:300],train_results['Réalité'][20:300],label='Réalité')
         plt_lstm_1.legend()
-        st.pyplot(plt_lstm_1)
+        #st.pyplot(plt_lstm_1)
         plt_lstm_1.figure().clear()
 
         val_predictions = model_lstm.predict(X_val1).flatten()
         val_results = pd.DataFrame(data={'Val Predictions':val_predictions, 'Réalité':y_val1})
-        val_results
+        #val_results
 
         import matplotlib.pyplot as plt_lstm_2
 
         plt_lstm_2.plot(train_df['ds'][2900:3000],val_results['Val Predictions'][:100],label='Predictions')
         plt_lstm_2.plot(train_df['ds'][2900:3000],val_results['Réalité'][:100],label='Réalité')
         plt_lstm_2.legend()
-        st.pyplot(plt_lstm_2)
+        #st.pyplot(plt_lstm_2)
         plt_lstm_2.figure().clear()
 
 
@@ -345,8 +365,13 @@ if choose == "Regression":
         plt.figure().clear()
 
 
+
+
     else:
         placeholder = st.empty()
+
+
+
 if choose == "Classification":
     st.markdown(""" <style> .font {
         font-size:35px ; font-family: 'Cooper Black'; color: #FF9633;} 
@@ -389,6 +414,14 @@ if choose == "Classification":
         print("Dummy classifier: \n ", classification_report(y_test, y_predict))
         print("-"*30)
 
+        rap1 = classification_report(y_test, y_predict)
+        st.write("Le premier modèle testé est le Dummy Classifier. Voici les résulats :")
+        st.write("Rapport de classification")
+        st.text(rap1)
+
+        st.write("\n")
+        st.write("Courbe ROC du modèle")
+
         fpr_dumm, tpr_dumm, thresholds  = roc_curve(y_test, y_pred_prob)
 
         plt.rcParams['font.size'] = 12
@@ -407,8 +440,9 @@ if choose == "Classification":
         st.pyplot(plt)
         plt.figure().clear()
 
+        st.write("Les résultats de ce modèle, comme on pouvait s’y attendre, sont totalement erronés pour la classe minoritaire et la courbe ROC montre l'absence de pertinence dans la classification proposée.")
+
     elif chosen_id == "tab2":
-        st.write("DecisionTreeClassifier")
         #Séparation entre feature et cible
         X = df_prepare.drop(columns=["RainTomorrow"], axis=1)
         y = df_prepare["RainTomorrow"]
@@ -426,19 +460,16 @@ if choose == "Classification":
         y_dtree = dtree.predict(X_test)
         y_dtree_prob=dtree.predict_proba(X_test)[:,1]
 
-        st.write("LogisticRegression")
 
         lr = joblib.load('lr_clf.joblib')
         y_lr = lr.predict(X_test)
         y_lr_prob=lr.predict_proba(X_test)[:,1]
 
-        st.write("RandomForestClassifier")
 
         rf = joblib.load('rf_clf.joblib')
         y_rf = rf.predict(X_test)
         y_rf_prob=rf.predict_proba(X_test)[:,1]
 
-        st.write("SVC")
 
         svm = joblib.load('svm_clf.joblib')
         y_svm = svm.predict(X_test) 
@@ -466,6 +497,35 @@ if choose == "Classification":
         print("-"*30)
         print("-"*30)
 
+        rap2 = classification_report(y_test, y_lr)
+        st.write("Les modèles testés lors de cette approche sont les modèles classiques(Régression Logistique, Arbre de décision, Fôret aléatoire et SVM).\
+                 Voici les résulats :")
+        st.write("Rapports de classification")
+        st.write('Regression Logistique :')
+        st.text(rap2)
+        
+        st.write("\n")
+
+
+        rap6= classification_report(y_test, y_dtree)
+        st.write('Arbre de Décision :')
+        st.text(rap6)
+        
+        st.write("\n")
+
+        rap7 = classification_report(y_test, y_rf)
+        st.write('Forêt aléatoire :')
+        st.text(rap7)
+        
+        st.write("\n")
+
+        rap8 = classification_report(y_test, y_svm)
+        st.write('SVM :')
+        st.text(rap8)
+        
+        st.write("\n")
+        st.write("Courbe ROC des modèles")
+
         fpr_lr, tpr_lr, thresholds  = roc_curve(y_test, y_lr_prob)
         fpr_rf, tpr_rf, thresholds  = roc_curve(y_test, y_rf_prob)
         fpr_dtree, tpr_dtree, thresholds  = roc_curve(y_test, y_dtree_prob)
@@ -490,8 +550,11 @@ if choose == "Classification":
         st.pyplot(plt)
         plt.figure().clear()
 
+        st.write("On constate que 2 modèles sont assez proches. Afin de les distinguer, on compare la précision de ces modèles : le meilleur modèle est le Random Forest (accuracy = 0.85).")
+
+
     elif chosen_id == "tab3":
-        st.write("RandomForestClassifier Opti") 
+        st.write("RandomForestClassifier Optimisé") 
         df = chargement_data()
         df_prepare = chargement_ville('Darwin',df)
         df_prepare['Date'] = pd.to_datetime(df_prepare['Date'])
@@ -537,6 +600,17 @@ if choose == "Classification":
         print("Random forest optimisé : \n ", classification_report(y_test, y_pred))
         print("-"*30)
 
+        
+        rap3 = classification_report(y_test, y_pred)
+        st.write("Dans cette approche, nous avons cherché à améliorer l'approche précédente en prennant en compte les données métérologiques des jours précédents ainsi qu'en cherchant les meilleurs paramètres du modèle .\
+                 Voici les résulats :")
+        st.write("Rapport de classification :")
+        st.text(rap3)
+                
+        st.write("\n")
+        st.write("Courbe ROC :")
+
+
         y_rf_opt = clf_rf_opti.predict(X_test)
         y_rf_opt_prob=clf_rf_opti.predict_proba(X_test)[:,1]
 
@@ -557,9 +631,15 @@ if choose == "Classification":
         plt.show()
         st.pyplot(plt)
         plt.figure().clear()
+
+        st.write("On observe une amélioration générale des résultats (en comparaison avec le modèle non optimisé) notamment au niveau de la classe 1.")
     
     elif chosen_id == "tab4":
         st.write("RandomForestClassifier")
+        st.write("Dans cette approche, nous avons cherché à améliorer l'approche précédente en prennant en compte les données géographiques.\
+                 Voici les résulats :")
+
+
         df = chargement_data()
         df_prepare = chargement_ville('Darwin',df)
         cat_columns, num_columns = separation_colonnes(df_prepare)
@@ -624,6 +704,9 @@ if choose == "Classification":
         plt.show()
         st.pyplot(plt)
         plt.figure().clear()
+
+        st.write("Le résultat montre une amélioration par rapport à l’approche classique (accuracy = 0.84) et un temps d’exécution court. La classe 1 ( pour rappel : classe 1 = il pleuvra le lendemain)  est aussi mieux prédite.")
+
     
     elif chosen_id == "tab5":
         st.write("MLPClassifier")
@@ -676,6 +759,12 @@ if choose == "Classification":
         print("MLPClassifier: \n", classification_report(y_test, y_pred))
         print("-"*30)
 
+        rap5 = classification_report(y_test, y_pred)
+        st.write("Dans cette approche, nous avons cherché à améliorer l'approche précédente en prennant utilisant un réseau de neurones (MLP) .\
+                 Voici les résulats :")
+        st.write("Rapport de classification :")
+        st.text(rap5)
+
         fpr_mlpc_opti, tpr_mlpc_opti, thresholds  = roc_curve(y_test, y_pred_prob)
 
         plt.rcParams['font.size'] = 12
@@ -712,13 +801,16 @@ if choose == "Classification":
         )
         # fig.show()
         st.write(fig)
+        st.write("On observe que les résultats décrivent un bon modèle avec un bonne précision/recall pour la classe 0 ainsi que de meilleurs résultats que précédemment pour classe 1 au niveau du recall")
     
     else:
         placeholder = st.empty()
+
+
 if choose == "Application":
     chosen_id = stx.tab_bar(data=[
-    stx.TabBarItemData(id="tab1", title="Regression", description="BaseLine"),
-    stx.TabBarItemData(id="tab2", title="Classification", description="Modèle Classique")])
+    stx.TabBarItemData(id="tab1", title="Regression", description="Prédiction de la température"),
+    stx.TabBarItemData(id="tab2", title="Classification", description="Pleuvra t-il demain?")])
     placeholder = st.container()
     if chosen_id == "tab1":
         st.write("Regression")
@@ -804,8 +896,7 @@ if choose == "Application":
 
             #func call
             n = len(df)
-            st.write('vouvou n')
-            st.write(n)
+        
             ymax = df[select_param].max()+5
             ymin = df[select_param].min()-5
             for i in range(0, n-30, 1):
@@ -849,8 +940,7 @@ if choose == "Application":
 
             #func call
             n = len(df)
-            st.write('vouvou n')
-            st.write(n)
+            
             ymax = df['Test Predictions'].max()+5
             ymin = df['Test Predictions'].min()-5
             for i in range(0, n-30, 1):
