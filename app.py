@@ -55,7 +55,7 @@ if choose == "À propos du projet":
         </style> """, unsafe_allow_html=True)
         st.markdown('<p class="font">Présentation du projet</p>', unsafe_allow_html=True)    
         
-        st.image('meteo.png', width=600)
+        # st.image('meteo.png', width=600)
         st.write('Ce projet est basé sur un ensemble d’observations météorologiques journalières d’Australie. Ces observations ont été faites sur l’ensemble du territoire Australien, dans 49 villes différentes.')
         st.title('Objectifs')
         st.write('L’objectif de ce projet est de proposer des modèles capables de prédire efficacement les données météorologiques, à savoir s\'il pleuvra le lendemain ou quelle température il fera.')
@@ -145,7 +145,6 @@ if choose == "Data Viz":
             plt.subplot(4,4,i)
             sns.histplot(df[column]).set(title=column);
         st.pyplot(fig)
-
 if choose == "Regression":
     st.markdown(""" <style> .font {
         font-size:35px ; font-family: 'Cooper Black'; color: #FF9633;} 
@@ -348,9 +347,6 @@ if choose == "Regression":
 
     else:
         placeholder = st.empty()
-
-        
-
 if choose == "Classification":
     st.markdown(""" <style> .font {
         font-size:35px ; font-family: 'Cooper Black'; color: #FF9633;} 
@@ -719,3 +715,263 @@ if choose == "Classification":
     
     else:
         placeholder = st.empty()
+if choose == "Application":
+    chosen_id = stx.tab_bar(data=[
+    stx.TabBarItemData(id="tab1", title="Regression", description="BaseLine"),
+    stx.TabBarItemData(id="tab2", title="Classification", description="Modèle Classique")])
+    placeholder = st.container()
+    if chosen_id == "tab1":
+        st.write("Regression")
+        select_model = st.container()
+        with select_model:
+            select_model = st.selectbox('Selectionner un modèle',[" Choix du modèle","Modèle", "ARIMA", "LSTM", "Prophet"])
+        
+        min= pd.to_datetime(df['Date']).min()+pd.DateOffset(days=375)
+        max= pd.to_datetime(df['Date']).max()-pd.DateOffset(days=365)
+        choix_periode= st.date_input('Date input', min_value = min, max_value = max, value = min)
+
+        
+
+        if select_model == "LSTM":
+            
+            from keras.models import load_model
+            model_lstm = load_model('model_lstm.h5')
+            #st.write(model_lstm)
+            df = chargement_data()
+
+            df_prepare = chargement_ville('Darwin',df)
+
+            df_prepare.head()
+
+            train_df = pd.DataFrame()
+            train_df['ds'] = pd.to_datetime(df_prepare['Date'])
+            train_df['y']=df_prepare['Temp9am']
+            train_df
+            train_df2 = train_df[train_df['ds']<'2016-06-24']
+            train_df2.tail(2)
+            df_rnn= train_df
+            df_rnn.index = pd.to_datetime(df_rnn['ds'])
+            df_rnn.drop(['ds'],axis=1)
+            
+            def df_to_X_y(df, window_size=5):
+                df_as_np = df.to_numpy()
+                X = []
+                y = []
+                for i in range(len(df_as_np)-window_size):
+                    row = [[a] for a in df_as_np[i:i+window_size]]
+                    X.append(row)
+                    label = df_as_np[i+window_size]
+                    y.append(label)
+                return np.array(X), np.array(y)
+            WINDOW_SIZE = 5
+            temp = df_rnn['y']
+            X1, y1 = df_to_X_y(temp, WINDOW_SIZE)
+            #X1.shape, y1.shape
+            X_train1, y_train1 = X1[:2900], y1[:2900]
+            X_val1, y_val1 = X1[2900:3033], y1[2900:3033]
+            X_test1, y_test1 = X1[3033:], y1[3033:]
+            #X_train1.shape, y_train1.shape, X_val1.shape, y_val1.shape, X_test1.shape, y_test1.shape
+            test_predictions = model_lstm.predict(X1).flatten()
+            test_results = pd.DataFrame(data={'ds':train_df[5:]['ds'],'Test Predictions':test_predictions, 'Réalité':y1})
+            test_results.shape
+            df = test_results
+            train_df.reset_index(drop=True)
+            
+            df['ds'] = train_df['ds']
+            df = df.reset_index(drop=True)
+            #df['ds'] = train_df['ds'][3033:3188]
+            df = df[df['ds']>pd.to_datetime(choix_periode)]
+            df
+            df.shape
+            # for i in range(df.shape[0]):
+                # df['ds'][i] =train_df['ds'][3033+i]
+            header = st.container()
+            plot_spot = st.empty()
+            select_param = st.container()
+            with select_param:
+                param_lst = list(df.columns)
+                param_lst.remove('ds')
+                select_param = st.selectbox('Select a Weather Parameter',   param_lst)
+            #function to make chart
+            def make_chart(df, y_col1,y_col2, ymin, ymax):
+                fig = go.Figure(layout_yaxis_range=[ymin, ymax])
+                fig.add_trace(go.Scatter(x=df['ds'], y=df[y_col1],  name=y_col1))
+                fig.add_trace(go.Scatter(x=df['ds'], y=df[y_col2],  name=y_col2))
+                
+                fig.update_layout(width=900, height=570, xaxis_title='time',
+                yaxis_title='Température')
+                st.write(fig)
+
+            #func call
+            n = len(df)
+            st.write('vouvou n')
+            st.write(n)
+            ymax = df[select_param].max()+5
+            ymin = df[select_param].min()-5
+            for i in range(0, n-30, 1):
+                df_tmp = df.iloc[i:i+30, :]
+                with plot_spot:
+                    make_chart(df_tmp, 'Test Predictions','Réalité', ymin, ymax)
+                time.sleep(0.5)
+        if select_model == "ARIMA":
+            
+            arima = joblib.load("arima.joblib")
+            df = chargement_data()
+
+            df_prepare = chargement_ville('Darwin',df)
+
+            df_ts = df_prepare[['Date','Temp9am']].copy()
+            df_ts['Date'] = pd.to_datetime(df_ts['Date'])
+            df_ts.reset_index(drop=True, inplace=True)
+            df_ts.set_index('Date', inplace=True)
+            #df['ds'] = train_df['ds'][3033:3188]
+            pred = arima.get_prediction(start=pd.to_datetime(choix_periode), dynamic=False)
+            #df_ts
+            df = df_ts[df_ts.index>=pd.to_datetime(choix_periode)] 
+            #pred.predicted_mean
+            #df
+            test_results = pd.DataFrame(data={'ds':df.index,'Test Predictions':pred.predicted_mean, 'Réalité':df['Temp9am']})
+            # for i in range(df.shape[0]):
+                # df['ds'][i] =train_df['ds'][3033+i]
+            header = st.container()
+            plot_spot = st.empty()
+            select_param = st.container()
+            df = test_results
+            #function to make chart
+            def make_chart(df, y_col1,y_col2, ymin, ymax):
+                fig = go.Figure(layout_yaxis_range=[ymin, ymax])
+                fig.add_trace(go.Scatter(x=df['ds'], y=df[y_col1],  name=y_col1))
+                fig.add_trace(go.Scatter(x=df['ds'], y=df[y_col2],  name=y_col2))
+                
+                fig.update_layout(width=900, height=570, xaxis_title='time',
+                yaxis_title='Température')
+                st.write(fig)
+
+            #func call
+            n = len(df)
+            st.write('vouvou n')
+            st.write(n)
+            ymax = df['Test Predictions'].max()+5
+            ymin = df['Test Predictions'].min()-5
+            for i in range(0, n-30, 1):
+                df_tmp = df.iloc[i:i+30, :]
+                with plot_spot:
+                    make_chart(df_tmp, 'Test Predictions','Réalité', ymin, ymax)
+                time.sleep(0.5)
+        if select_model == "Prophet":
+            
+            prophet = joblib.load("prophet.joblib")
+            df = chargement_data()
+
+            df_prepare = chargement_ville('Darwin',df)
+
+            train_df = pd.DataFrame()
+            train_df['ds'] = pd.to_datetime(df_prepare['Date'])
+            train_df['y']=df_prepare['Temp9am']
+            train_df.reset_index(drop=True, inplace=True)
+            train_df
+            train_df2 = train_df[train_df['ds']<'2016-06-24']
+            train_df2.tail(2)            
+            future = prophet.make_future_dataframe(periods=365)
+            future.tail(2)
+            forecast = prophet.predict(future)
+            st.write(forecast.tail(2))
+            forecast 
+            
+            test_results = pd.DataFrame(data={'ds':train_df['ds'],'Test Predictions':forecast['yhat'], 'Réalité':train_df['y']})
+            test_results
+            # for i in range(df.shape[0]):
+                # df['ds'][i] =train_df['ds'][3033+i]
+            header = st.container()
+            plot_spot = st.empty()
+            select_param = st.container()
+            df = test_results
+            df = test_results[test_results['ds']>=pd.to_datetime(choix_periode)] 
+            #function to make chart
+            def make_chart(df, y_col1,y_col2, ymin, ymax):
+                fig = go.Figure(layout_yaxis_range=[ymin, ymax])
+                fig.add_trace(go.Scatter(x=df['ds'], y=df[y_col1],  name=y_col1))
+                fig.add_trace(go.Scatter(x=df['ds'], y=df[y_col2],  name=y_col2))
+                
+                fig.update_layout(width=900, height=570, xaxis_title='time',
+                yaxis_title='Température')
+                st.write(fig)
+           
+
+            #func call
+            n = len(df)
+            st.write('vouvou n')
+            st.write(n)
+            ymax = df['Test Predictions'].max()+5
+            ymin = df['Test Predictions'].min()-5
+            for i in range(0, n-30, 1):
+                df_tmp = df.iloc[i:i+30, :]
+                with plot_spot:
+                    make_chart(df_tmp, 'Test Predictions','Réalité', ymin, ymax)
+                time.sleep(0.5)
+    if chosen_id == "tab2":
+        st.write("Classification")
+        choix_ville = st.selectbox( label = "choix de la ville", options = df['Location'].unique(), index= 0)
+        min= pd.to_datetime(df['Date']).min()+pd.DateOffset(days=375)
+        max= pd.to_datetime(df['Date']).max()-pd.DateOffset(days=365)
+        choix_periode= st.date_input('Date input', min_value = min, max_value = max, value = min)
+        mlp_clf_pipe_opti = joblib.load("mlp_clf_opti.joblib")
+        df = chargement_data()
+        df_prepare = chargement_ville('Darwin',df)
+        cat_columns, num_columns = separation_colonnes(df_prepare)
+        test = encodage(df_prepare[pd.to_datetime(df_prepare['Date']) == pd.to_datetime(choix_periode)],cat_columns)
+        test = test.drop(columns=["RainTomorrow"], axis=1)
+        sortie = mlp_clf_pipe_opti.predict_proba(test)
+        sortie2 = mlp_clf_pipe_opti.predict(test)  
+        if sortie[:,1]>0.5:
+            # st.image('pluie.png', width=600)
+            # st.write("Température max:",test["MaxTemp"].values[0])
+            # st.write("Température min:",test["MinTemp"].values[0])
+            # st.write("Probabilité de pluie:",sortie[:,1])
+            # col1, col4, col2, col3 = st.columns(4)
+
+            # with col1:
+            #     st.image('pluie.png', width=200)
+
+            # with col4:
+            #     st.header("Ville")
+            #     st.write(choix_ville)
+
+            # with col2:
+            #     st.write("Température max:",test["MaxTemp"].values[0])
+            #     st.write("Température min:",test["MinTemp"].values[0])
+
+            # with col3:
+            #     proba = sortie[:,1]
+            #     st.write(f"Probabilité de pluie: {round(proba[0]*100, 2)}")
+            temp_max_percent = 1.2
+            temp_min_percent = -0.8
+            pluie_percent = 12
+            colTommorow, colImage, col3, colToday, col1, col2 = st.columns(6)
+            proba = sortie[:,1]
+            colTommorow.header("Demain")
+            with colImage:
+                st.image('pluie.png', width=200)
+            col3.metric("Probabilité de pluie", f"{round(proba[0]*100, 2)}%", f"{pluie_percent} %")
+            colToday.header("Aujourd'hui")
+            col1.metric("Température max", f"{test.MaxTemp.values[0]} °C", f"{temp_max_percent} °C")
+            col2.metric("Température min", f"{test.MinTemp.values[0]} °C", f"{temp_min_percent} °C")
+
+        else:
+            # st.image('soleil.png', width=600)
+            # st.write("Température max:",test["MaxTemp"].values[0])
+            # st.write("Température min:",test["MinTemp"].values[0])
+            # st.write("Probabilité de pluie:",sortie[:,0])
+
+            temp_max_percent = 1.2
+            temp_min_percent = -0.8
+            pluie_percent = 12
+            colTommorow, colImage, col3, colToday, col1, col2 = st.columns(6)            
+            proba = sortie[:,0]
+            colTommorow.header("Demain")
+            with colImage:
+                st.image('sun-icon-vector-isolated-sun-flat-vector-icons-sun-logo-design-inspiration-700-175858735-removebg-preview (1).png', width=200)
+            col3.metric("Probabilité de beau temps", f"{round(proba[0]*100, 2)}%", f"{pluie_percent} %")
+            colToday.header("Aujourd'hui")
+            col1.metric("Température max", f"{test.MaxTemp.values[0]} °C", f"{temp_max_percent} °C")
+            col2.metric("Température min", f"{test.MinTemp.values[0]} °C", f"{temp_min_percent} °C")
