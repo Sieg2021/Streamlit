@@ -109,7 +109,8 @@ if choose == "Data Viz":
         #graph nb de villes
         st.bar_chart(df['Location'].value_counts())
         
-        
+        st.write('\n')
+
         #graph visualisation évoluation de la temp min max sur 10 ans
         df2= df
         df2['year'] = df2['Date'].apply(lambda date : date.split('-')[0]).astype(int)
@@ -123,9 +124,25 @@ if choose == "Data Viz":
         plt.xlabel('Année')
         plt.ylabel('Température (°C) ')
         st.pyplot(fig)
+        st.write('\n')
+
+        df2= df
+        df2['year'] = df2['Date'].apply(lambda date : date.split('-')[0]).astype(int)
+        df2['month'] = df2['Date'].apply(lambda date : date.split('-')[1]).astype(int)
+        df2['day'] = df2['Date'].apply(lambda date : date.split('-')[2]).astype(int)
+        st.write("Visualisation de l'évolution de la température maximale et minimale")
+        fig = plt.figure()
+        sns.lineplot( x= 'month', y = 'MinTemp', label = 'température min', data = df2.groupby('month').mean())
+        sns.lineplot( x= 'month', y = 'MaxTemp', label = 'température max', data = df2.groupby('month').mean())
+        plt.title("Variation de températures par mois")
+        plt.xlabel('Mois')
+        plt.ylabel('Température (°C) ')
+        st.pyplot(fig)
         df = pd.read_csv(path)
 
         #répartion Rain
+        st.write('\n')
+        st.write("Visualisation de la réparation des variables RainToday et RainTomorrow")
         fig3 =plt.figure(figsize=(20, 8))
         plt.subplot(121)
         plt.title(label='Modalités de la variable RainToday')
@@ -134,12 +151,13 @@ if choose == "Data Viz":
         plt.title(label='Modalités de la variable RainTomorrow')
         sns.countplot(x="RainTomorrow", data=df);
         st.pyplot(fig3)
-        
+        st.write('\n')
+
         #visualisation multivariable
         st.write("Visualisation de la réparation de chacune des variables dans le jeu de données")
         numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
         num_variable = df.select_dtypes(include=numerics)
-        fig = plt.figure()
+        fig = plt.figure(figsize=(20, 40))
         plt.subplots_adjust(left=0.12,
                             bottom=0.12,
                             right=0.9,
@@ -147,7 +165,7 @@ if choose == "Data Viz":
                             wspace=0.4,
                             hspace=0.4)
         for i, column in enumerate(num_variable, 1):
-            plt.subplot(4,4,i)
+            plt.subplot(8,2,i)
             sns.histplot(df[column]).set(title=column);
         st.pyplot(fig)
 
@@ -679,6 +697,35 @@ if choose == "Classification":
         y_svm_ville = svm_ville.predict(X_test) 
         y_svm_ville_prob=svm_ville.predict_proba(X_test)[:,1]
 
+        rap9 = classification_report(y_test, y_lr_ville)
+        st.write("Les modèles testés lors de cette approche sont les modèles classiques(Régression Logistique, Arbre de décision, Fôret aléatoire et SVM).\
+                 Voici les résulats :")
+        st.write("Rapports de classification")
+        st.write('Regression Logistique :')
+        st.text(rap9)
+        
+        st.write("\n")
+
+
+        rap10 = classification_report(y_test, y_dtree_ville)
+        st.write('Arbre de Décision :')
+        st.text(rap10)
+        
+        st.write("\n")
+
+        rap11 = classification_report(y_test, y_rf_ville)
+        st.write('Forêt aléatoire :')
+        st.text(rap11)
+        
+        st.write("\n")
+
+        rap12 = classification_report(y_test, y_svm_ville)
+        st.write('SVM :')
+        st.text(rap12)
+        
+        st.write("\n")
+        st.write("Courbe ROC des modèles")
+
 
         fpr_lr_ville, tpr_lr_ville, thresholds  = roc_curve(y_test, y_lr_ville_prob)
         fpr_rf_ville, tpr_rf_ville, thresholds  = roc_curve(y_test, y_rf_ville_prob)
@@ -816,7 +863,7 @@ if choose == "Application":
         st.write("Regression")
         select_model = st.container()
         with select_model:
-            select_model = st.selectbox('Selectionner un modèle',[" Choix du modèle","Modèle", "ARIMA", "LSTM", "Prophet"])
+            select_model = st.selectbox('Selectionner un modèle',[" Choix du modèle", "ARIMA", "LSTM", "Prophet"])
         
         min= pd.to_datetime(df['Date']).min()+pd.DateOffset(days=375)
         max= pd.to_datetime(df['Date']).max()-pd.DateOffset(days=365)
@@ -838,7 +885,7 @@ if choose == "Application":
             train_df = pd.DataFrame()
             train_df['ds'] = pd.to_datetime(df_prepare['Date'])
             train_df['y']=df_prepare['Temp9am']
-            train_df
+            #train_df
             train_df2 = train_df[train_df['ds']<'2016-06-24']
             train_df2.tail(2)
             df_rnn= train_df
@@ -865,7 +912,7 @@ if choose == "Application":
             #X_train1.shape, y_train1.shape, X_val1.shape, y_val1.shape, X_test1.shape, y_test1.shape
             test_predictions = model_lstm.predict(X1).flatten()
             test_results = pd.DataFrame(data={'ds':train_df[5:]['ds'],'Test Predictions':test_predictions, 'Réalité':y1})
-            test_results.shape
+            #test_results.shape
             df = test_results
             train_df.reset_index(drop=True)
             
@@ -873,17 +920,17 @@ if choose == "Application":
             df = df.reset_index(drop=True)
             #df['ds'] = train_df['ds'][3033:3188]
             df = df[df['ds']>pd.to_datetime(choix_periode)]
-            df
-            df.shape
+            #df
+            #df.shape
             # for i in range(df.shape[0]):
                 # df['ds'][i] =train_df['ds'][3033+i]
             header = st.container()
             plot_spot = st.empty()
-            select_param = st.container()
-            with select_param:
-                param_lst = list(df.columns)
-                param_lst.remove('ds')
-                select_param = st.selectbox('Select a Weather Parameter',   param_lst)
+            # select_param = st.container()
+            # with select_param:
+            #     param_lst = list(df.columns)
+            #     param_lst.remove('ds')
+            #     select_param = st.selectbox('Select a Weather Parameter',   param_lst)
             #function to make chart
             def make_chart(df, y_col1,y_col2, ymin, ymax):
                 fig = go.Figure(layout_yaxis_range=[ymin, ymax])
@@ -897,8 +944,8 @@ if choose == "Application":
             #func call
             n = len(df)
         
-            ymax = df[select_param].max()+5
-            ymin = df[select_param].min()-5
+            ymax = df['Test Predictions'].max()+5
+            ymin = df['Test Predictions'].min()-5
             for i in range(0, n-30, 1):
                 df_tmp = df.iloc[i:i+30, :]
                 with plot_spot:
@@ -959,17 +1006,17 @@ if choose == "Application":
             train_df['ds'] = pd.to_datetime(df_prepare['Date'])
             train_df['y']=df_prepare['Temp9am']
             train_df.reset_index(drop=True, inplace=True)
-            train_df
+            #train_df
             train_df2 = train_df[train_df['ds']<'2016-06-24']
             train_df2.tail(2)            
             future = prophet.make_future_dataframe(periods=365)
             future.tail(2)
             forecast = prophet.predict(future)
-            st.write(forecast.tail(2))
-            forecast 
+            #st.write(forecast.tail(2))
+            #forecast 
             
             test_results = pd.DataFrame(data={'ds':train_df['ds'],'Test Predictions':forecast['yhat'], 'Réalité':train_df['y']})
-            test_results
+            #test_results
             # for i in range(df.shape[0]):
                 # df['ds'][i] =train_df['ds'][3033+i]
             header = st.container()
@@ -990,8 +1037,8 @@ if choose == "Application":
 
             #func call
             n = len(df)
-            st.write('vouvou n')
-            st.write(n)
+            #st.write('vouvou n')
+            #st.write(n)
             ymax = df['Test Predictions'].max()+5
             ymin = df['Test Predictions'].min()-5
             for i in range(0, n-30, 1):
@@ -1001,7 +1048,7 @@ if choose == "Application":
                 time.sleep(0.5)
     if chosen_id == "tab2":
         st.write("Classification")
-        choix_ville = st.selectbox( label = "choix de la ville", options = df['Location'].unique(), index= 0)
+        #choix_ville = st.selectbox( label = "choix de la ville", options = df['Location'].unique(), index= 0)
         min= pd.to_datetime(df['Date']).min()+pd.DateOffset(days=375)
         max= pd.to_datetime(df['Date']).max()-pd.DateOffset(days=365)
         choix_periode= st.date_input('Date input', min_value = min, max_value = max, value = min)
