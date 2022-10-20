@@ -54,7 +54,7 @@ hide_dataframe_row_index = """
             """
 
     # Inject CSS with Markdown
-# st.markdown(hide_dataframe_row_index, unsafe_allow_html=True)
+st.markdown(hide_dataframe_row_index, unsafe_allow_html=True)
 with st.sidebar:
     choose = option_menu("Menu", ["À propos du projet", "Jeux de données","Data Viz","Classification", "Regression","Application"],
                          icons=['cloud-hail','pie-chart','bar-chart', 'diagram-2', 'graph-up','app-indicator'],
