@@ -1,3 +1,4 @@
+from asyncio.windows_events import NULL
 import streamlit as st # web development
 import numpy as np # np mean, np random 
 import pandas as pd # read csv, df manipulation
@@ -32,8 +33,6 @@ st.set_page_config(
 )
 
 # dashboard title
-
-#st.title("Prévision météo")
 hide_dataframe_row_index = """
            <style>
             .stApp {
@@ -55,6 +54,8 @@ hide_dataframe_row_index = """
 
     # Inject CSS with Markdown
 st.markdown(hide_dataframe_row_index, unsafe_allow_html=True)
+#st.title("Prévision météo")
+
 with st.sidebar:
     choose = option_menu("Menu", ["À propos du projet", "Jeux de données","Data Viz","Classification", "Regression","Application"],
                          icons=['cloud-hail','pie-chart','bar-chart', 'diagram-2', 'graph-up','app-indicator'],
@@ -84,6 +85,8 @@ if choose == "À propos du projet":
         st.title('Membres du projet')
         st.write('Saïd LATTI')
         st.write('Emma ROBERT')
+
+
 if choose == "Jeux de données":
     col1, col2 = st.columns( [0.8, 0.2])
     with col1: 
@@ -104,6 +107,9 @@ if choose == "Jeux de données":
             st.empty()
             from preprocessing import page_preprocessing    # To display the header text using css style
             page_preprocessing()
+
+
+
 if choose == "Data Viz":
     st.empty()
     col1, col2, col3 = st.columns( [0.2, 0.5,0.3])
@@ -124,7 +130,8 @@ if choose == "Data Viz":
         #graph nb de villes
         st.bar_chart(df['Location'].value_counts())
         
-        
+        st.write('\n')
+
         #graph visualisation évoluation de la temp min max sur 10 ans
         df2= df
         df2['year'] = df2['Date'].apply(lambda date : date.split('-')[0]).astype(int)
@@ -138,9 +145,25 @@ if choose == "Data Viz":
         plt.xlabel('Année')
         plt.ylabel('Température (°C) ')
         st.pyplot(fig)
+        st.write('\n')
+
+        df2= df
+        df2['year'] = df2['Date'].apply(lambda date : date.split('-')[0]).astype(int)
+        df2['month'] = df2['Date'].apply(lambda date : date.split('-')[1]).astype(int)
+        df2['day'] = df2['Date'].apply(lambda date : date.split('-')[2]).astype(int)
+        st.write("Visualisation de l'évolution de la température maximale et minimale")
+        fig = plt.figure()
+        sns.lineplot( x= 'month', y = 'MinTemp', label = 'température min', data = df2.groupby('month').mean())
+        sns.lineplot( x= 'month', y = 'MaxTemp', label = 'température max', data = df2.groupby('month').mean())
+        plt.title("Variation de températures par mois")
+        plt.xlabel('Mois')
+        plt.ylabel('Température (°C) ')
+        st.pyplot(fig)
         df = pd.read_csv(path)
 
         #répartion Rain
+        st.write('\n')
+        st.write("Visualisation de la réparation des variables RainToday et RainTomorrow")
         fig3 =plt.figure(figsize=(20, 8))
         plt.subplot(121)
         plt.title(label='Modalités de la variable RainToday')
@@ -149,12 +172,13 @@ if choose == "Data Viz":
         plt.title(label='Modalités de la variable RainTomorrow')
         sns.countplot(x="RainTomorrow", data=df);
         st.pyplot(fig3)
-        
+        st.write('\n')
+
         #visualisation multivariable
         st.write("Visualisation de la réparation de chacune des variables dans le jeu de données")
         numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
         num_variable = df.select_dtypes(include=numerics)
-        fig = plt.figure()
+        fig = plt.figure(figsize=(20, 40))
         plt.subplots_adjust(left=0.12,
                             bottom=0.12,
                             right=0.9,
@@ -162,9 +186,10 @@ if choose == "Data Viz":
                             wspace=0.4,
                             hspace=0.4)
         for i, column in enumerate(num_variable, 1):
-            plt.subplot(4,4,i)
+            plt.subplot(8,2,i)
             sns.histplot(df[column]).set(title=column);
         st.pyplot(fig)
+
 if choose == "Regression":
     st.markdown(""" <style> .font {
         font-size:35px ; font-family: 'Cooper Black'; color: #FF9633;} 
@@ -178,6 +203,7 @@ if choose == "Regression":
     placeholder = st.container()
     if chosen_id == "tab1":
         st.write("<h3>DummyRegressor</h3>", unsafe_allow_html=True)
+        st.write("DummyRegressor est un modèle de régression qui fait des prédictions en utilisant des règles simples.")
         dummy_regressor_model = joblib.load('mon_dummy_regr.joblib')
         df = chargement_data()
         df_prepare = chargement_ville('Darwin',df)
@@ -198,7 +224,7 @@ if choose == "Regression":
 
         test_results = pd.DataFrame(data={'Test Predictions':y_predict, 'Réalité':y_test})
         test_result= test_results.reset_index(drop=True)
-        st.write(test_result)
+        #st.write(test_result)
 
         import matplotlib.pyplot as plt_dummy
         plt_dummy.rcParams["figure.figsize"] = (20,15)
@@ -210,8 +236,12 @@ if choose == "Regression":
         st.pyplot(plt_dummy)
         plt_dummy.figure().clear()
 
+        st.write("Curieusement, les résultats sont assez correct avec un pourcentage d’erreur absolu moyen de 8,1% comme le montre le graphique")
+
     elif chosen_id == "tab3":
         st.write("<h3>Prophet</h3>", unsafe_allow_html=True)
+        st.write("Pour cette approche, nous avons choisi de nous intéresser au modèle dévelloppé par Facebook : Facebook prophet car il est adapté aux séries temporelles et facile à paramétrer.")
+        st.write("Voici la courbe représentant la réalité et les données prédites par ce modèle :")
         df = chargement_data()
         df_prepare = chargement_ville('Darwin',df)
         df_prepare['Date'] = pd.to_datetime(df_prepare['Date'])
@@ -254,7 +284,11 @@ if choose == "Regression":
         st.pyplot(plt_prophet)
         plt_prophet.figure().clear()
 
+        st.write("On obtient de très bons résultats et qui sont assez proches de la réalité")
+
     elif chosen_id == "tab2":
+        st.write("Etant donné que nos données contiennent une forte temporalité, dans cette approche nous allons utliser un modèle ARIMA.")
+        st.write("Voici la courbe représentant la réalité et les données prédites par ce modèle :")
 
         df = chargement_data()
         df_prepare = chargement_ville('Darwin',df)
@@ -283,12 +317,17 @@ if choose == "Regression":
         plt.legend()
         st.pyplot(plt)
         plt.figure().clear()
+
+        st.write("On obtient de très bons résultats et qui sont assez proches de la réalité, malgré un léger décalage de quelques degrés")
+
     elif chosen_id == "tab4":
         st.write("<h3>LSTM Model</h3>", unsafe_allow_html=True)
 
         from keras.models import load_model
         model_lstm = load_model('model_lstm.h5')
-        #st.write(model_lstm)
+
+        st.write("Dans cette approche, le modèle choisi est un réseau de neuronnes adapté aux séries temporelles : le modèle LSTM")
+        st.write("Les résultats obtenus sont bons avec le pourcentage d’erreur absolue moyenne  (MAPE) de 4.6%. Un graphe de comparaison entre les valeurs réelles et les valeurs prédites permettent de se rendre compte visuellement de ces performances:")
 
         df = chargement_data()
         df_prepare = chargement_ville('Darwin',df)
@@ -317,11 +356,11 @@ if choose == "Regression":
         WINDOW_SIZE = 5
         temp = df_rnn['y']
         X1, y1 = df_to_X_y(temp, WINDOW_SIZE)
-        X1.shape, y1.shape
+        #X1.shape, y1.shape
         X_train1, y_train1 = X1[:2900], y1[:2900]
         X_val1, y_val1 = X1[2900:3033], y1[2900:3033]
         X_test1, y_test1 = X1[3033:], y1[3033:]
-        X_train1.shape, y_train1.shape, X_val1.shape, y_val1.shape, X_test1.shape, y_test1.shape
+        #X_train1.shape, y_train1.shape, X_val1.shape, y_val1.shape, X_test1.shape, y_test1.shape
         score = model_lstm.evaluate(X_test1, y_test1, verbose=0)
 
         print('x_test / loss      : {:5.4f}'.format(score[0]))
@@ -330,26 +369,26 @@ if choose == "Regression":
 
         train_predictions = model_lstm.predict(X_train1).flatten()
         train_results = pd.DataFrame(data={'Predictions':train_predictions, 'Réalité':y_train1})
-        train_results
+        #train_results
         import matplotlib.pyplot as plt_lstm_1
         plt_lstm_1.rcParams["figure.figsize"] = (20,15)
 
         plt_lstm_1.plot(train_df['ds'][20:300],train_results['Predictions'][20:300],color='yellow',label ='Predictions')
         plt_lstm_1.plot(train_df['ds'][20:300],train_results['Réalité'][20:300],label='Réalité')
         plt_lstm_1.legend()
-        st.pyplot(plt_lstm_1)
+        #st.pyplot(plt_lstm_1)
         plt_lstm_1.figure().clear()
 
         val_predictions = model_lstm.predict(X_val1).flatten()
         val_results = pd.DataFrame(data={'Val Predictions':val_predictions, 'Réalité':y_val1})
-        val_results
+        #val_results
 
         import matplotlib.pyplot as plt_lstm_2
 
         plt_lstm_2.plot(train_df['ds'][2900:3000],val_results['Val Predictions'][:100],label='Predictions')
         plt_lstm_2.plot(train_df['ds'][2900:3000],val_results['Réalité'][:100],label='Réalité')
         plt_lstm_2.legend()
-        st.pyplot(plt_lstm_2)
+        #st.pyplot(plt_lstm_2)
         plt_lstm_2.figure().clear()
 
 
@@ -365,8 +404,13 @@ if choose == "Regression":
         plt.figure().clear()
 
 
+
+
     else:
         placeholder = st.empty()
+
+
+
 if choose == "Classification":
     st.markdown(""" <style> .font {
         font-size:35px ; font-family: 'Cooper Black'; color: #FF9633;} 
@@ -409,6 +453,14 @@ if choose == "Classification":
         print("Dummy classifier: \n ", classification_report(y_test, y_predict))
         print("-"*30)
 
+        rap1 = classification_report(y_test, y_predict)
+        st.write("Le premier modèle testé est le Dummy Classifier. Voici les résulats :")
+        st.write("Rapport de classification")
+        st.text(rap1)
+
+        st.write("\n")
+        st.write("Courbe ROC du modèle")
+
         fpr_dumm, tpr_dumm, thresholds  = roc_curve(y_test, y_pred_prob)
 
         plt.rcParams['font.size'] = 12
@@ -427,8 +479,9 @@ if choose == "Classification":
         st.pyplot(plt)
         plt.figure().clear()
 
+        st.write("Les résultats de ce modèle, comme on pouvait s’y attendre, sont totalement erronés pour la classe minoritaire et la courbe ROC montre l'absence de pertinence dans la classification proposée.")
+
     elif chosen_id == "tab2":
-        st.write("DecisionTreeClassifier")
         #Séparation entre feature et cible
         X = df_prepare.drop(columns=["RainTomorrow"], axis=1)
         y = df_prepare["RainTomorrow"]
@@ -446,19 +499,16 @@ if choose == "Classification":
         y_dtree = dtree.predict(X_test)
         y_dtree_prob=dtree.predict_proba(X_test)[:,1]
 
-        st.write("LogisticRegression")
 
         lr = joblib.load('lr_clf.joblib')
         y_lr = lr.predict(X_test)
         y_lr_prob=lr.predict_proba(X_test)[:,1]
 
-        st.write("RandomForestClassifier")
 
         rf = joblib.load('rf_clf.joblib')
         y_rf = rf.predict(X_test)
         y_rf_prob=rf.predict_proba(X_test)[:,1]
 
-        st.write("SVC")
 
         svm = joblib.load('svm_clf.joblib')
         y_svm = svm.predict(X_test) 
@@ -486,6 +536,35 @@ if choose == "Classification":
         print("-"*30)
         print("-"*30)
 
+        rap2 = classification_report(y_test, y_lr)
+        st.write("Les modèles testés lors de cette approche sont les modèles classiques(Régression Logistique, Arbre de décision, Fôret aléatoire et SVM).\
+                 Voici les résulats :")
+        st.write("Rapports de classification")
+        st.write('Regression Logistique :')
+        st.text(rap2)
+        
+        st.write("\n")
+
+
+        rap6= classification_report(y_test, y_dtree)
+        st.write('Arbre de Décision :')
+        st.text(rap6)
+        
+        st.write("\n")
+
+        rap7 = classification_report(y_test, y_rf)
+        st.write('Forêt aléatoire :')
+        st.text(rap7)
+        
+        st.write("\n")
+
+        rap8 = classification_report(y_test, y_svm)
+        st.write('SVM :')
+        st.text(rap8)
+        
+        st.write("\n")
+        st.write("Courbe ROC des modèles")
+
         fpr_lr, tpr_lr, thresholds  = roc_curve(y_test, y_lr_prob)
         fpr_rf, tpr_rf, thresholds  = roc_curve(y_test, y_rf_prob)
         fpr_dtree, tpr_dtree, thresholds  = roc_curve(y_test, y_dtree_prob)
@@ -510,8 +589,11 @@ if choose == "Classification":
         st.pyplot(plt)
         plt.figure().clear()
 
+        st.write("On constate que 2 modèles sont assez proches. Afin de les distinguer, on compare la précision de ces modèles : le meilleur modèle est le Random Forest (accuracy = 0.85).")
+
+
     elif chosen_id == "tab3":
-        st.write("RandomForestClassifier Opti") 
+        st.write("RandomForestClassifier Optimisé") 
         df = chargement_data()
         df_prepare = chargement_ville('Darwin',df)
         df_prepare['Date'] = pd.to_datetime(df_prepare['Date'])
@@ -557,6 +639,17 @@ if choose == "Classification":
         print("Random forest optimisé : \n ", classification_report(y_test, y_pred))
         print("-"*30)
 
+        
+        rap3 = classification_report(y_test, y_pred)
+        st.write("Dans cette approche, nous avons cherché à améliorer l'approche précédente en prennant en compte les données métérologiques des jours précédents ainsi qu'en cherchant les meilleurs paramètres du modèle .\
+                 Voici les résulats :")
+        st.write("Rapport de classification :")
+        st.text(rap3)
+                
+        st.write("\n")
+        st.write("Courbe ROC :")
+
+
         y_rf_opt = clf_rf_opti.predict(X_test)
         y_rf_opt_prob=clf_rf_opti.predict_proba(X_test)[:,1]
 
@@ -577,9 +670,15 @@ if choose == "Classification":
         plt.show()
         st.pyplot(plt)
         plt.figure().clear()
+
+        st.write("On observe une amélioration générale des résultats (en comparaison avec le modèle non optimisé) notamment au niveau de la classe 1.")
     
     elif chosen_id == "tab4":
         st.write("RandomForestClassifier")
+        st.write("Dans cette approche, nous avons cherché à améliorer l'approche précédente en prennant en compte les données géographiques.\
+                 Voici les résulats :")
+
+
         df = chargement_data()
         df_prepare = chargement_ville('Darwin',df)
         cat_columns, num_columns = separation_colonnes(df_prepare)
@@ -619,6 +718,35 @@ if choose == "Classification":
         y_svm_ville = svm_ville.predict(X_test) 
         y_svm_ville_prob=svm_ville.predict_proba(X_test)[:,1]
 
+        rap9 = classification_report(y_test, y_lr_ville)
+        st.write("Les modèles testés lors de cette approche sont les modèles classiques(Régression Logistique, Arbre de décision, Fôret aléatoire et SVM).\
+                 Voici les résulats :")
+        st.write("Rapports de classification")
+        st.write('Regression Logistique :')
+        st.text(rap9)
+        
+        st.write("\n")
+
+
+        rap10 = classification_report(y_test, y_dtree_ville)
+        st.write('Arbre de Décision :')
+        st.text(rap10)
+        
+        st.write("\n")
+
+        rap11 = classification_report(y_test, y_rf_ville)
+        st.write('Forêt aléatoire :')
+        st.text(rap11)
+        
+        st.write("\n")
+
+        rap12 = classification_report(y_test, y_svm_ville)
+        st.write('SVM :')
+        st.text(rap12)
+        
+        st.write("\n")
+        st.write("Courbe ROC des modèles")
+
 
         fpr_lr_ville, tpr_lr_ville, thresholds  = roc_curve(y_test, y_lr_ville_prob)
         fpr_rf_ville, tpr_rf_ville, thresholds  = roc_curve(y_test, y_rf_ville_prob)
@@ -644,6 +772,9 @@ if choose == "Classification":
         plt.show()
         st.pyplot(plt)
         plt.figure().clear()
+
+        st.write("Le résultat montre une amélioration par rapport à l’approche classique (accuracy = 0.84) et un temps d’exécution court. La classe 1 ( pour rappel : classe 1 = il pleuvra le lendemain)  est aussi mieux prédite.")
+
     
     elif chosen_id == "tab5":
         st.write("MLPClassifier")
@@ -696,6 +827,12 @@ if choose == "Classification":
         print("MLPClassifier: \n", classification_report(y_test, y_pred))
         print("-"*30)
 
+        rap5 = classification_report(y_test, y_pred)
+        st.write("Dans cette approche, nous avons cherché à améliorer l'approche précédente en prennant utilisant un réseau de neurones (MLP) .\
+                 Voici les résulats :")
+        st.write("Rapport de classification :")
+        st.text(rap5)
+
         fpr_mlpc_opti, tpr_mlpc_opti, thresholds  = roc_curve(y_test, y_pred_prob)
 
         plt.rcParams['font.size'] = 12
@@ -732,19 +869,22 @@ if choose == "Classification":
         )
         # fig.show()
         st.write(fig)
+        st.write("On observe que les résultats décrivent un bon modèle avec un bonne précision/recall pour la classe 0 ainsi que de meilleurs résultats que précédemment pour classe 1 au niveau du recall")
     
     else:
         placeholder = st.empty()
+
+
 if choose == "Application":
     chosen_id = stx.tab_bar(data=[
-    stx.TabBarItemData(id="tab1", title="Regression", description="BaseLine"),
-    stx.TabBarItemData(id="tab2", title="Classification", description="Modèle Classique")])
+    stx.TabBarItemData(id="tab1", title="Regression", description="Prédiction de la température"),
+    stx.TabBarItemData(id="tab2", title="Classification", description="Pleuvra t-il demain?")])
     placeholder = st.container()
     if chosen_id == "tab1":
         st.write("Regression")
         select_model = st.container()
         with select_model:
-            select_model = st.selectbox('Selectionner un modèle',[" Choix du modèle","Modèle", "ARIMA", "LSTM", "Prophet"])
+            select_model = st.selectbox('Selectionner un modèle',[" Choix du modèle", "ARIMA", "LSTM", "Prophet"])
         
         min= pd.to_datetime(df['Date']).min()+pd.DateOffset(days=375)
         max= pd.to_datetime(df['Date']).max()-pd.DateOffset(days=365)
@@ -766,7 +906,7 @@ if choose == "Application":
             train_df = pd.DataFrame()
             train_df['ds'] = pd.to_datetime(df_prepare['Date'])
             train_df['y']=df_prepare['Temp9am']
-            train_df
+            #train_df
             train_df2 = train_df[train_df['ds']<'2016-06-24']
             train_df2.tail(2)
             df_rnn= train_df
@@ -793,7 +933,7 @@ if choose == "Application":
             #X_train1.shape, y_train1.shape, X_val1.shape, y_val1.shape, X_test1.shape, y_test1.shape
             test_predictions = model_lstm.predict(X1).flatten()
             test_results = pd.DataFrame(data={'ds':train_df[5:]['ds'],'Test Predictions':test_predictions, 'Réalité':y1})
-            test_results.shape
+            #test_results.shape
             df = test_results
             train_df.reset_index(drop=True)
             
@@ -801,17 +941,17 @@ if choose == "Application":
             df = df.reset_index(drop=True)
             #df['ds'] = train_df['ds'][3033:3188]
             df = df[df['ds']>pd.to_datetime(choix_periode)]
-            df
-            df.shape
+            #df
+            #df.shape
             # for i in range(df.shape[0]):
                 # df['ds'][i] =train_df['ds'][3033+i]
             header = st.container()
             plot_spot = st.empty()
-            select_param = st.container()
-            with select_param:
-                param_lst = list(df.columns)
-                param_lst.remove('ds')
-                select_param = st.selectbox('Select a Weather Parameter',   param_lst)
+            # select_param = st.container()
+            # with select_param:
+            #     param_lst = list(df.columns)
+            #     param_lst.remove('ds')
+            #     select_param = st.selectbox('Select a Weather Parameter',   param_lst)
             #function to make chart
             def make_chart(df, y_col1,y_col2, ymin, ymax):
                 fig = go.Figure(layout_yaxis_range=[ymin, ymax])
@@ -824,10 +964,9 @@ if choose == "Application":
 
             #func call
             n = len(df)
-            st.write('vouvou n')
-            st.write(n)
-            ymax = df[select_param].max()+5
-            ymin = df[select_param].min()-5
+        
+            ymax = df['Test Predictions'].max()+5
+            ymin = df['Test Predictions'].min()-5
             for i in range(0, n-30, 1):
                 df_tmp = df.iloc[i:i+30, :]
                 with plot_spot:
@@ -869,8 +1008,7 @@ if choose == "Application":
 
             #func call
             n = len(df)
-            st.write('vouvou n')
-            st.write(n)
+            
             ymax = df['Test Predictions'].max()+5
             ymin = df['Test Predictions'].min()-5
             for i in range(0, n-30, 1):
@@ -889,17 +1027,17 @@ if choose == "Application":
             train_df['ds'] = pd.to_datetime(df_prepare['Date'])
             train_df['y']=df_prepare['Temp9am']
             train_df.reset_index(drop=True, inplace=True)
-            train_df
+            #train_df
             train_df2 = train_df[train_df['ds']<'2016-06-24']
             train_df2.tail(2)            
             future = prophet.make_future_dataframe(periods=365)
             future.tail(2)
             forecast = prophet.predict(future)
-            st.write(forecast.tail(2))
-            forecast 
+            #st.write(forecast.tail(2))
+            #forecast 
             
             test_results = pd.DataFrame(data={'ds':train_df['ds'],'Test Predictions':forecast['yhat'], 'Réalité':train_df['y']})
-            test_results
+            #test_results
             # for i in range(df.shape[0]):
                 # df['ds'][i] =train_df['ds'][3033+i]
             header = st.container()
@@ -920,8 +1058,8 @@ if choose == "Application":
 
             #func call
             n = len(df)
-            st.write('vouvou n')
-            st.write(n)
+            #st.write('vouvou n')
+            #st.write(n)
             ymax = df['Test Predictions'].max()+5
             ymin = df['Test Predictions'].min()-5
             for i in range(0, n-30, 1):
@@ -931,67 +1069,75 @@ if choose == "Application":
                 time.sleep(0.5)
     if chosen_id == "tab2":
         st.write("Classification")
-        choix_ville = st.selectbox( label = "choix de la ville", options = df['Location'].unique(), index= 0)
+        # choix_ville = st.selectbox( label = "choix de la ville", options = df['Location'].unique(), index= 0)
         min= pd.to_datetime(df['Date']).min()+pd.DateOffset(days=375)
         max= pd.to_datetime(df['Date']).max()-pd.DateOffset(days=365)
-        choix_periode= st.date_input('Date input', min_value = min, max_value = max, value = min)
-        mlp_clf_pipe_opti = joblib.load("mlp_clf_opti.joblib")
-        df = chargement_data()
-        df_prepare = chargement_ville('Darwin',df)
-        cat_columns, num_columns = separation_colonnes(df_prepare)
-        test = encodage(df_prepare[pd.to_datetime(df_prepare['Date']) == pd.to_datetime(choix_periode)],cat_columns)
-        test = test.drop(columns=["RainTomorrow"], axis=1)
-        sortie = mlp_clf_pipe_opti.predict_proba(test)
-        sortie2 = mlp_clf_pipe_opti.predict(test)  
-        if sortie[:,1]>0.5:
-            # st.image('pluie.png', width=600)
-            # st.write("Température max:",test["MaxTemp"].values[0])
-            # st.write("Température min:",test["MinTemp"].values[0])
-            # st.write("Probabilité de pluie:",sortie[:,1])
-            # col1, col4, col2, col3 = st.columns(4)
+        choix_periode= st.date_input('Date input', min_value = min, max_value = max, value=min)
+        if choix_periode != min:
+            mlp_clf_pipe_opti = joblib.load("mlp_clf_opti.joblib")
+            df = chargement_data()
+            df_prepare = chargement_ville('Darwin',df)
+            cat_columns, num_columns = separation_colonnes(df_prepare)
+            test = encodage(df_prepare[pd.to_datetime(df_prepare['Date']) == pd.to_datetime(choix_periode)],cat_columns)
+            test = test.drop(columns=["RainTomorrow"], axis=1)
+            sortie = mlp_clf_pipe_opti.predict_proba(test)
+            sortie2 = mlp_clf_pipe_opti.predict(test)  
+            if sortie[:,1]>0.5:
+                # st.image('pluie.png', width=600)
+                # st.write("Température max:",test["MaxTemp"].values[0])
+                # st.write("Température min:",test["MinTemp"].values[0])
+                # st.write("Probabilité de pluie:",sortie[:,1])
+                # col1, col4, col2, col3 = st.columns(4)
 
-            # with col1:
-            #     st.image('pluie.png', width=200)
+                # with col1:
+                #     st.image('pluie.png', width=200)
 
-            # with col4:
-            #     st.header("Ville")
-            #     st.write(choix_ville)
+                # with col4:
+                #     st.header("Ville")
+                #     st.write(choix_ville)
 
-            # with col2:
-            #     st.write("Température max:",test["MaxTemp"].values[0])
-            #     st.write("Température min:",test["MinTemp"].values[0])
+                # with col2:
+                #     st.write("Température max:",test["MaxTemp"].values[0])
+                #     st.write("Température min:",test["MinTemp"].values[0])
 
-            # with col3:
-            #     proba = sortie[:,1]
-            #     st.write(f"Probabilité de pluie: {round(proba[0]*100, 2)}")
-            temp_max_percent = 1.2
-            temp_min_percent = -0.8
-            pluie_percent = 12
-            colTommorow, colImage, col3, colToday, col1, col2 = st.columns(6)
-            proba = sortie[:,1]
-            colTommorow.header("Demain")
-            with colImage:
-                st.image('pluie.png', width=200)
-            col3.metric("Probabilité de pluie", f"{round(proba[0]*100, 2)}%", f"{pluie_percent} %")
-            colToday.header("Aujourd'hui")
-            col1.metric("Température max", f"{test.MaxTemp.values[0]} °C", f"{temp_max_percent} °C")
-            col2.metric("Température min", f"{test.MinTemp.values[0]} °C", f"{temp_min_percent} °C")
+                # with col3:
+                #     proba = sortie[:,1]
+                #     st.write(f"Probabilité de pluie: {round(proba[0]*100, 2)}")
+                temp_max_percent = 1.2
+                temp_min_percent = -0.8
+                pluie_percent = 12
+                colTommorow, colImage, colVille, col3, colToday, col1, col2 = st.columns(7)
+                proba = sortie[:,1]
+                colTommorow.header("Demain")
+                with colImage:
+                    st.image('pluie.png', width=200)
+                with colVille:
+                    st.header("Ville")
+                    st.write("<h3>Darwin</h3>", unsafe_allow_html=True)
+                col3.metric("Probabilité de pluie", f"{round(proba[0]*100, 2)}%", f"{pluie_percent} %")
+                colToday.header("Aujourd'hui")
+                col1.metric("Température max", f"{test.MaxTemp.values[0]} °C", f"{temp_max_percent} °C")
+                col2.metric("Température min", f"{test.MinTemp.values[0]} °C", f"{temp_min_percent} °C")
 
-        else:
-            # st.image('soleil.png', width=600)
-            # st.write("Température max:",test["MaxTemp"].values[0])
-            # st.write("Température min:",test["MinTemp"].values[0])
-            # st.write("Probabilité de pluie:",sortie[:,0])
+            else:
+                # st.image('soleil.png', width=600)
+                # st.write("Température max:",test["MaxTemp"].values[0])
+                # st.write("Température min:",test["MinTemp"].values[0])
+                # st.write("Probabilité de pluie:",sortie[:,0])
 
-            temp_max_percent = 1.2
-            temp_min_percent = -0.8
-            pluie_percent = 12
-            colTommorow, colImage, col3, colToday, col1, col2 = st.columns(6)            
-            proba = sortie[:,0]
-            colTommorow.header("Demain")
-            with colImage:
-                st.image('sun-icon-vector-isolated-sun-flat-vector-icons-sun-logo-design-inspiration-700-175858735-removebg-preview (1).png', width=200)
-            col3.metric("Probabilité de beau temps", f"{round(proba[0]*100, 2)}%", f"{pluie_percent} %")
-            colToday.header("Aujourd'hui")
-            col1.metric("Température max", f"{test.MaxTemp.values[0]} °C", f"{temp_max_percent} °C")
-            col2.metric("Température min", f"{test.MinTemp.values[0]} °C", f"{temp_min_percent} °C")
+                temp_max_percent = 1.2
+                temp_min_percent = -0.8
+                pluie_percent = 12
+                colTommorow, colImage, colVille, col3, colToday, col1, col2 = st.columns(7)            
+                proba = sortie[:,0]
+                test
+                colTommorow.header("Demain")
+                with colImage:
+                    st.image('sun-icon-vector-isolated-sun-flat-vector-icons-sun-logo-design-inspiration-700-175858735-removebg-preview (1).png', width=200)
+                with colVille:
+                    st.header("Ville")
+                    st.write("<h3>Darwin</h3>", unsafe_allow_html=True)
+                col3.metric("Probabilité de beau temps", f"{round(proba[0]*100, 2)}%", f"{pluie_percent} %")
+                colToday.header("Aujourd'hui")
+                col1.metric("Température max", f"{test.MaxTemp.values[0]} °C", f"{temp_max_percent} °C")
+                col2.metric("Température min", f"{test.MinTemp.values[0]} °C", f"{temp_min_percent} °C")
